@@ -2,6 +2,7 @@
 !data/*Icon
 data/*
 utils/GloVe/corpus
+utils/saved_items/*
 
 
 
