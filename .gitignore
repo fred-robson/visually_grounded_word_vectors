@@ -1,5 +1,7 @@
 #ignore anything in data
+!data/*Icon
 data/*
+
 
 
 # Byte-compiled / optimized / DLL files
