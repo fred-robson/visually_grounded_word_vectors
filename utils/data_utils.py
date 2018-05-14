@@ -13,11 +13,22 @@ base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
 
 class CocoCaptions():
 
-	def __init__(self):
+	def __init__(self,data=3):
+		'''
+		Data lets you know where to pull the captions from.
+			0 = train
+			1 = val
+			2 = train and val
+			3 = tiny
+		'''
 		val_file   = "../data/Coco/Annotations/captions_val2014.json"
 		train_file = "../data/Coco/Annotations/captions_train2014.json" 
-		self.save_loc = "../data/Coco/Annotations/CocoCaptions_saved.pkl"
-		self.data = self.create_data([val_file,train_file]) #{image_id:[caption1,caption2,....]}
+		tiny_file = "../data/Coco/Annotations/captions_tiny2014.json" 
+
+		data_options = {0:[train_file],1:[val_file],2:[train_file,val_file],3:[tiny_file]}
+
+		self.save_loc = "../data/Coco/Annotations/CocoCaptions_saved_%i.pkl"%data
+		self.data = self.create_data(data_options[data]) #{image_id:[caption1,caption2,....]}
 
 
 	def create_data(self,file_names):
@@ -53,7 +64,7 @@ class CocoCaptions():
 
 	def build_corpus(self):
 		'''
-		Builds GloVe 
+		Builds corpus for GloVe to run on
 		'''
 		outfile = "GloVe/corpus"
 		with open(outfile,"w+") as out: 
@@ -144,7 +155,6 @@ class GloVeVectors(WordVectors):
 		WordVectors.__init__(self,words,vectors)
 
 
-
 class CaptionGloveVectors(WordVectors):
 
 	def __init__(self,dimensions=50):
@@ -166,9 +176,9 @@ class CaptionGloveVectors(WordVectors):
 
 if __name__ == "__main__":
 	
+	'''
 	CG = CaptionGloveVectors()
 	G = GloVeVectors()
 	'''
-	Captions = CocoCaptions()
+	Captions = CocoCaptions(0)
 	Captions.build_corpus()
-	'''
