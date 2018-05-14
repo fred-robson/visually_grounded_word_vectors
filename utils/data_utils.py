@@ -3,7 +3,7 @@ import json, os
 from collections import defaultdict
 from nltk.tokenize import word_tokenize as tokenize
 from scipy.spatial.distance import cosine
-
+from PIL import Image
 from tqdm import tqdm
 import pickle as pkl
 import numpy as np
@@ -21,15 +21,21 @@ class CocoCaptions():
 			2 = train and val
 			3 = tiny
 		'''
-		val_file   = "../data/Coco/Annotations/captions_val2014.json"
-		train_file = "../data/Coco/Annotations/captions_train2014.json" 
-		tiny_file = "../data/Coco/Annotations/captions_tiny2014.json" 
+		val_file   = base_fp+"../data/Coco/Annotations/captions_val2014.json"
+		train_file = base_fp+"../data/Coco/Annotations/captions_train2014.json" 
+		tiny_file = base_fp+"../data/Coco/Annotations/captions_tiny2014.json" 
+
+		self.data_source = {train_file:"train",val_file:"val",tiny_file:"tiny"}
 
 		data_options = {0:[train_file],1:[val_file],2:[train_file,val_file],3:[tiny_file]}
 
-		self.save_loc = "../data/Coco/Annotations/CocoCaptions_saved_%i.pkl"%data
+		self.save_loc = base_fp+"saved_items/CocoCaptions_saved_%i.pkl"%data
 		self.data = self.create_data(data_options[data]) #{image_id:[caption1,caption2,....]}
 
+		self.image_locations = {"train":base_fp+"../data/Coco/Train2014/COCO_train2014_",
+							    "val":base_fp+"../data/Coco/Val2014/COCO_val2014_",
+							    "tiny":base_fp+"../data/Coco/Tiny2014/COCO_train2014_",
+							   }
 
 	def create_data(self,file_names):
 		'''
@@ -38,14 +44,20 @@ class CocoCaptions():
 		if os.path.isfile(self.save_loc):
 			return pkl.load(open(self.save_loc,'rb')) 
 
+		data = defaultdict(lambda:[])
 		loaded_jsons = []
-		for f in file_names: 
-			loaded_jsons+=self.load_json(f)
 
-		data = defaultdict(lambda: [])
-		print("Running one-time tokenization of captions")
-		for v in tqdm(loaded_jsons):
-			data[v['image_id']].append(tokenize(v['caption'].lower()))
+		for f in file_names: 
+			loaded_jsons=self.load_json(f)
+
+		
+			print("Running one-time tokenization of captions")
+			for v in tqdm(loaded_jsons):
+				data_source = self.data_source[f]
+				image_id = int(v['image_id']),data_source
+				data[image_id].append(tokenize(v['caption'].lower()))
+
+		data = dict(data) #remove default dict
 
 		pkl.dump(dict(data),open(self.save_loc,"wb"))
 
@@ -74,6 +86,30 @@ class CocoCaptions():
 						out.write(c) 
 						out.write(" ")
 					out.write("\n")
+
+	def get_image_file_address(self,image_id):
+		#Image id is of the form (id,source) eg (1423,"val")
+		image_num = image_id[0]
+		data_source = image_id[1]
+		file_path = self.image_locations[data_source]
+		elongated_id = (12-len(str(image_num)))*"0"+str(image_num) #Length of digits is 12 in folder
+		file_path+=elongated_id+".jpg"
+		return file_path
+
+	def load_image(self,image_id):
+		'''
+		Image id is of the form (id,source) eg (1423,"val")
+		Returns a Pillow Image object
+		'''
+		address = self.get_image_file_address(image_id)
+		return Image.open(address)
+
+	def get_all_captions(self):
+		return self.data
+
+	def get_captions(self,image_id):
+		#Image id is of the form (id,source) eg (1423,"val")
+		return self.data[image_id]
 
 
 
@@ -180,5 +216,6 @@ if __name__ == "__main__":
 	CG = CaptionGloveVectors()
 	G = GloVeVectors()
 	'''
-	Captions = CocoCaptions(0)
-	Captions.build_corpus()
+	Captions = CocoCaptions(3)
+	Captions.load_image((9,"tiny"))
+
