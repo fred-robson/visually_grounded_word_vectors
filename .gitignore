@@ -1,6 +1,7 @@
 #ignore anything in data
 !data/*Icon
 data/*
+utils/GloVe/corpus
 
 
 
