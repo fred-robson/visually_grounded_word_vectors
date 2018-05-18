@@ -3,7 +3,7 @@ import json, os
 from collections import defaultdict
 from nltk.tokenize import word_tokenize as tokenize
 from scipy.spatial.distance import cosine
-from PIL import Image
+import scipy.misc
 from tqdm import tqdm
 import pickle as pkl
 import numpy as np
@@ -19,7 +19,7 @@ class CocoCaptions():
 			0 = train
 			1 = val
 			2 = train and val
-			3 = tiny
+			3 = tiny (Note that tiny is a subset of train)
 		'''
 		val_file   = base_fp+"../data/Coco/Annotations/captions_val2014.json"
 		train_file = base_fp+"../data/Coco/Annotations/captions_train2014.json" 
@@ -30,7 +30,7 @@ class CocoCaptions():
 		data_options = {0:[train_file],1:[val_file],2:[train_file,val_file],3:[tiny_file]}
 
 		self.save_loc = base_fp+"saved_items/CocoCaptions_saved_%i.pkl"%data
-		self.data = self.create_data(data_options[data]) #{image_id:[caption1,caption2,....]}
+		self.data = self.create_data(data_options[data]) #{(image_id,source):[caption1,caption2,....]}
 
 		self.image_locations = {"train":base_fp+"../data/Coco/Train2014/COCO_train2014_",
 							    "val":base_fp+"../data/Coco/Val2014/COCO_val2014_",
@@ -39,7 +39,7 @@ class CocoCaptions():
 
 	def create_data(self,file_names):
 		'''
-		Loads data in the format: {image_id:[caption1,caption2,....]}
+		Loads data in the format: {(image_id,source):[caption1,caption2,....]}
 		'''
 		if os.path.isfile(self.save_loc):
 			return pkl.load(open(self.save_loc,'rb')) 
@@ -59,7 +59,7 @@ class CocoCaptions():
 
 		data = dict(data) #remove default dict
 
-		pkl.dump(dict(data),open(self.save_loc,"wb"))
+		pkl.dump(data,open(self.save_loc,"wb"))
 
 		return data
 
@@ -99,19 +99,31 @@ class CocoCaptions():
 	def load_image(self,image_id):
 		'''
 		Image id is of the form (id,source) eg (1423,"val")
-		Returns a Pillow Image object
+		Returns a matrix representing the RGB vals of the image
 		'''
+		if not image_id in self.data:
+			raise Exception("Image not in dataset")
 		address = self.get_image_file_address(image_id)
-		return Image.open(address)
+		return scipy.misc.imread(address, flatten=False, mode='RGB')
+
 
 	def get_all_captions(self):
 		return self.data
 
+	def get_all_images(self):
+		keys = list(self.data.keys())
+		i = 0
+		len_keys = len(keys)
+		while i < len_keys:
+			k = keys[i]
+			yield self.load_image(k),k
+			i+=1
+
+
+
 	def get_captions(self,image_id):
 		#Image id is of the form (id,source) eg (1423,"val")
 		return self.data[image_id]
-
-
 
 
 class WordVectors():
@@ -203,12 +215,6 @@ class CaptionGloveVectors(WordVectors):
 
 	
 
-	
-
-
-	
-
-
 
 if __name__ == "__main__":
 	
@@ -217,5 +223,5 @@ if __name__ == "__main__":
 	G = GloVeVectors()
 	'''
 	Captions = CocoCaptions(3)
-	Captions.load_image((9,"tiny"))
+	Captions.load_image((9,"tiny")).show()
 
