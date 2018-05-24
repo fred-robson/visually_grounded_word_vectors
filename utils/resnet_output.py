@@ -30,29 +30,31 @@ def main(data = 3):
 	coco = CocoCaptions(data)
 
 	for image,image_id in tqdm(coco.get_all_images(),total=coco.num_images()):
-			
-		trans = transforms.Compose([
-									transforms.ToPILImage(), #RandomCrop requires PIL image
-									transforms.RandomCrop(size=224),
-									transforms.ToTensor(), #Convert back to tensor to normalize
-									transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]),
-									])
 		
-		image = trans(image)
-		image = image.unsqueeze(0) #unsqueeze bc it needs to be a batch. Here use a batch of size 1
-		output = Model(image)
-		output_np = output.detach().numpy()
-		save_address = coco.get_image_resnet_address(image_id)
-		np.save(save_address,output_np)
+		try:	
+			trans = transforms.Compose([
+										transforms.ToPILImage(), #RandomCrop requires PIL image
+										transforms.RandomCrop(size=224),
+										transforms.ToTensor(), #Convert back to tensor to normalize
+										transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]),
+										])
+			
+			image = trans(image)
+			image = image.unsqueeze(0) #unsqueeze bc it needs to be a batch. Here use a batch of size 1
+			output = Model(image)
+			output_np = output.detach().numpy()
+			save_address = coco.get_image_resnet_address(image_id)
+			np.save(save_address,output_np)
+		except:
+			print("Error at:",image_id)
+			raise
 
 
 
 if __name__ == "__main__":
 	
 	main(3)
-	
-	try:  main(2)
-	except: print("Train and Val data has not been loaded")
+	main(2)
 
 
 
