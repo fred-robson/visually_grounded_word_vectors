@@ -1,0 +1,1 @@
+Allows the file structure to be added to github
