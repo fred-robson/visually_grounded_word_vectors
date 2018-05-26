@@ -33,26 +33,29 @@ def main(data = 3,ignore_prev = False):
 
 	for image,image_id in tqdm(coco.get_all_images(),total=coco.num_images()):
 		
-		save_address = coco.get_image_resnet_address(image_id)
-		if os.path.isfile(save_address) and ignore_prev: continue 
+		try:
+			save_address = coco.get_image_resnet_address(image_id)
+			if os.path.isfile(save_address) and ignore_prev: continue 
 
-		#Convert to PiL image for resizing + croppping 
-		convert_to_pil = transforms.ToPILImage()
-		image = convert_to_pil(image)
-		transforms.functional.resize(image,size=image_size) #model requires everything is at least 
+			#Convert to PiL image for resizing + croppping 
+			convert_to_pil = transforms.ToPILImage()
+			image = convert_to_pil(image)
+			transforms.functional.resize(image,size=image_size) #model requires everything is at least 
 
-		trans = transforms.Compose([			
-									transforms.RandomCrop(size=image_size),
-									transforms.ToTensor(), #Convert back to tensor to normalize
-									transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]),
-									])
-		
-		image = trans(image)
-		image = image.unsqueeze(0) #unsqueeze bc it needs to be a batch. Here use a batch of size 1
-		output = Model(image)
-		output_np = output.detach().numpy()
-		np.save(save_address,output_np)
-		
+			trans = transforms.Compose([			
+										transforms.RandomCrop(size=image_size),
+										transforms.ToTensor(), #Convert back to tensor to normalize
+										transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]),
+										])
+			
+			image = trans(image)
+			image = image.unsqueeze(0) #unsqueeze bc it needs to be a batch. Here use a batch of size 1
+			output = Model(image)
+			output_np = output.detach().numpy()
+			np.save(save_address,output_np)
+		except: 
+			print(image_id)
+			raise
 
 
 
