@@ -272,5 +272,5 @@ if __name__ == "__main__":
 	G = GloVeVectors()
 	'''
 	Captions = CocoCaptions(3)
-	Captions.load_image((9,"tiny")).show()
+	Captions.get_image((366897,"tiny"))
 
