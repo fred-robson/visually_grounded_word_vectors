@@ -16,8 +16,10 @@ for t in tiny_files[:-1]:
 	image_id = t[15:-4]
 	try: 
 		image_id = int(image_id)
+		if image_id> 5000: print(image_id)
 		all_tiny_ids.append(image_id)
 	except: 
+		print(image_id)
 		continue
 
 with open(annotations_name) as f:
