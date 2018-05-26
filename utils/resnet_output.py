@@ -4,6 +4,7 @@ import torchvision.transforms as transforms
 from data_utils import CocoCaptions
 import numpy as np
 from tqdm import tqdm
+import os
 
 
 image_size = 224 #Size of smallest dimension
@@ -18,9 +19,9 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
 '''
 
-def main(data = 3):
+def main(data = 3,ignore_prev = False):
 	'''
-	Creates output for data loaded from coco. If 
+	Creates output for data loaded from coco. @data refers to what CocoCaptions type to load 
 	'''
 
 	Model = models.resnet101(pretrained = True).eval()
@@ -32,6 +33,9 @@ def main(data = 3):
 
 	for image,image_id in tqdm(coco.get_all_images(),total=coco.num_images()):
 		
+		save_address = coco.get_image_resnet_address(image_id)
+		if os.path.isfile(save_address) and ignore_prev: continue 
+
 		#Convert to PiL image for resizing + croppping 
 		convert_to_pil = transforms.ToPILImage()
 		image = convert_to_pil(image)
@@ -47,7 +51,6 @@ def main(data = 3):
 		image = image.unsqueeze(0) #unsqueeze bc it needs to be a batch. Here use a batch of size 1
 		output = Model(image)
 		output_np = output.detach().numpy()
-		save_address = coco.get_image_resnet_address(image_id)
 		np.save(save_address,output_np)
 		
 
@@ -55,8 +58,8 @@ def main(data = 3):
 
 if __name__ == "__main__":
 	
-	main(3)
-	main(2)
+	main(3,True)
+	main(2,True)
 
 
 
