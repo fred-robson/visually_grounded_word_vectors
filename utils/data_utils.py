@@ -264,8 +264,6 @@ class CaptionGloveVectors(WordVectors):
 		words,vectors = load_txt_vectors(filepath,dimensions)
 		WordVectors.__init__(self,words,vectors)
 
-	
-
 
 if __name__ == "__main__":
 	
