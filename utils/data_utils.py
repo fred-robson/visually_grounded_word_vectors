@@ -36,6 +36,14 @@ class CocoCaptions():
 							    "val":base_fp+"../data/Coco/Val2014/COCO_val2014_",
 							    "tiny":base_fp+"../data/Coco/Tiny2014/COCO_train2014_",
 							   }
+		self.resnet_locations ={"train":base_fp+"../data/Coco_ResNet/Train2014/COCO_train2014_",
+							    "val":base_fp+"../data/Coco_ResNet/Val2014/COCO_val2014_",
+							    "tiny":base_fp+"../data/Coco_ResNet/Tiny2014/COCO_train2014_",
+							   }
+
+	##########
+	# Set Up #
+	##########
 
 	def create_data(self,file_names):
 		'''
@@ -68,11 +76,22 @@ class CocoCaptions():
 			data = json.load(f)
 		return data['annotations']
 
+	#################
+	# Caption Stuff #
+	#################
+
 	def get_vocab(self):
 		vocab = set()
 		for v in self.data:
 			vocab.add(v)
 		return vocab
+
+	def get_captions(self,image_id):
+		#Image id is of the form (id,source) eg (1423,"val")
+		return self.data[image_id]
+
+	def get_all_captions(self):
+		return self.data
 
 	def build_corpus(self):
 		'''
@@ -87,6 +106,10 @@ class CocoCaptions():
 						out.write(" ")
 					out.write("\n")
 
+	###############
+	# Image Stuff #
+	###############
+
 	def get_image_file_address(self,image_id):
 		#Image id is of the form (id,source) eg (1423,"val")
 		image_num = image_id[0]
@@ -96,7 +119,7 @@ class CocoCaptions():
 		file_path+=elongated_id+".jpg"
 		return file_path
 
-	def load_image(self,image_id):
+	def get_image(self,image_id):
 		'''
 		Image id is of the form (id,source) eg (1423,"val")
 		Returns a matrix representing the RGB vals of the image
@@ -106,24 +129,52 @@ class CocoCaptions():
 		address = self.get_image_file_address(image_id)
 		return scipy.misc.imread(address, flatten=False, mode='RGB')
 
-
-	def get_all_captions(self):
-		return self.data
-
 	def get_all_images(self):
+		'''
+		Loads all the images using a generator
+		'''
 		keys = list(self.data.keys())
 		i = 0
 		len_keys = len(keys)
 		while i < len_keys:
 			k = keys[i]
-			yield self.load_image(k),k
+			yield self.get_image(k),k
 			i+=1
 
+	################
+	# Resnet stuff #
+	################
 
+	def get_image_resnet_address(self,image_id):
+		'''
+		Get the path to the resnet output
+		'''
+		image_num = image_id[0]
+		data_source = image_id[1]
+		file_path = self.resnet_locations[data_source]
+		file_path+=str(image_id[0])+".npy"
+		return file_path
 
-	def get_captions(self,image_id):
-		#Image id is of the form (id,source) eg (1423,"val")
-		return self.data[image_id]
+	def get_resnet_output(self,image_id):
+		#Returns the resnet output in the form of a numpy array 
+		file_path = self.get_image_resnet_address(image_id)
+		return np.load(file_path)
+
+	def get_all_resnet_output(self,image_id):
+		keys = list(self.data.keys())
+		i = 0
+		len_keys = len(keys)
+		while i < len_keys:
+			k = keys[i]
+			yield self.get_resnet_output(k),k
+			i+=1
+
+	########
+	# Misc #
+	########
+
+	def num_images(self):
+		return len(self.data)
 
 
 class WordVectors():
@@ -213,8 +264,6 @@ class CaptionGloveVectors(WordVectors):
 		words,vectors = load_txt_vectors(filepath,dimensions)
 		WordVectors.__init__(self,words,vectors)
 
-	
-
 
 if __name__ == "__main__":
 	
@@ -223,5 +272,5 @@ if __name__ == "__main__":
 	G = GloVeVectors()
 	'''
 	Captions = CocoCaptions(3)
-	Captions.load_image((9,"tiny")).show()
+	Captions.get_image((366897,"tiny"))
 
