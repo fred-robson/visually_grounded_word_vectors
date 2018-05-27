@@ -3,35 +3,13 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 from data_utils import CocoCaptions
 import numpy as np
+from tqdm import tqdm
+import os
 
-Model = models.resnet101(pretrained = True).eval()
-Model = Model.double()
-
-
-coco = CocoCaptions(3)
-
-for image,image_id in coco.get_all_images():
-	
-
-	image = image.astype(float,copy=False)
-	image = np.moveaxis(image,2,0) #i.e. mini-batches of 3-channel RGB images of shape (3 x H x W)
-	normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
-	image = torch.from_numpy(image)
-	normalize(image)
-	image = image.unsqueeze(0)
-	print(image.shape)
-	output = Model(image)
-
-
-
-
-
-
-
+broken_images_file = "saved_items/broken_images.txt"
+image_size = 224 #Size of smallest dimension
 
 '''
-
 All pre-trained models expect input images normalized in the same way,
 i.e. mini-batches of 3-channel RGB images of shape (3 x H x W), where H and W
 are expected to be at least 224. The images have to be loaded in to a range of [0, 1] 
@@ -40,6 +18,57 @@ You can use the following transform to normalize:
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
 '''
+
+def main(data = 3,ignore_prev = False):
+	'''
+	Creates output for data loaded from coco. @data refers to what CocoCaptions type to load 
+	'''
+
+	Model = models.resnet101(pretrained = True).eval()
+	Model = Model.float()
+
+	coco = CocoCaptions(data)
+
+	for image,image_id in tqdm(coco.get_all_images(),total=coco.num_images()):
+		
+		save_address = coco.get_image_resnet_address(image_id)
+		if os.path.isfile(save_address) and ignore_prev: continue 
+
+		#Convert to PiL image for resizing + croppping 
+		convert_to_pil = transforms.ToPILImage()
+		image = convert_to_pil(image)
+
+		image = transforms.functional.resize(image,size=image_size) #model requires everything is at least 
+
+		trans = transforms.Compose([			
+									transforms.RandomCrop(size=image_size),
+									transforms.ToTensor(), #Convert back to tensor to normalize
+									transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]),
+									])
+		
+		image = trans(image)
+		image = image.unsqueeze(0) #unsqueeze bc it needs to be a batch. Here use a batch of size 1
+		output = Model(image)
+		output_np = output.detach().numpy()
+		np.save(save_address,output_np)
+		
+		'''
+		except: 
+			with open(broken_images_file,"wb+") as f:
+				f.write(str(image_id))
+				f.write("\n")
+		'''
+
+
+
+if __name__ == "__main__":
+	main(3,True)
+	#main(2,True)
+
+
+
+
+
 
 
 
