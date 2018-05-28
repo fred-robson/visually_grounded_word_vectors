@@ -8,11 +8,11 @@ from keras.callbacks import TensorBoard
 from utils.data_utils import CocoCaptions
 from utils.data_utils import GloVeVectors
 
-def hp_search(model_type):
+def hp_search(args):
 
     from hpsearch.hyperband_skopt import HPSearcher
 
-    Captions = CocoCaptions(3)
+    Captions = CocoCaptions(args.data)
     WV = GloVeVectors()
     Captions.initialize_WV(WV)
     X,Y = Captions.cap2cap()
@@ -41,11 +41,11 @@ def hp_search(model_type):
         print()
         
         # Create the neural network with these hyper-parameters.
-        if model_type[:4] == "cap2":
+        if args.model[:4] == "cap2":
             from models.prototypes.baseline import Cap2
             params = {'learning_rate':learning_rate, 'hidden_dim':hidden_dim,
                  'optimizer':optimizer, 'dropout': 0.5}
-            model = Cap2(params, model_type=model_type)
+            model = Cap2(params, model_type=args.model)
 
         # Dir-name for the TensorBoard log-files.
         log_dir = _log_dir_name(learning_rate, hidden_dim)
