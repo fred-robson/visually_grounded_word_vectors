@@ -81,12 +81,8 @@ class WordVectors():
 		self.vectors = new_vectors
 		self.w2i = {w:i for i,w in enumerate(new_i2w)}
 
-	def get_embedding_matrix(self,input_length,trainable=False):
-		return Embedding(len(self.i2w),
-						 self.dimensions,
-						 weights = self.vectors,
-						 input_length = input_length,
-						 trainable = trainable)
+	def get_embedding_matrix(self):
+		return self.vectors
 
 
 def load_txt_vectors(filepath,dimensions):
