@@ -294,12 +294,11 @@ if __name__ == "__main__":
 	CG = CaptionGloveVectors()
 	G = GloVeVectors()
 	'''
-	Captions = CocoCaptions(2)
-	quit()
 	Captions = CocoCaptions(3)
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
 	
+	'''
 	X,Y1,Y2 = Captions.cap2cap()
 	for y1,y2 in zip(Y1,Y2):
 		print(Captions.WV.indices_to_words(y1,remove_padding=True))
@@ -310,9 +309,11 @@ if __name__ == "__main__":
 	for x,y in zip(X,Y):
 		print(Captions.WV.indices_to_words(x,remove_padding=False))
 		print(y)
+	'''
 
-	X,Y = Captions.cap2all()
-	for x,y in zip(X,Y):
+	X,Y1,Y2,Y3 = Captions.cap2all()
+	print(Y1)
+	for x,y in zip(X,Y1):
 		print(Captions.WV.indices_to_words(x,remove_padding=False))
-		print(y[0])
-		print(Captions.WV.indices_to_words(y[1],remove_padding=False))
+		print(Captions.WV.indices_to_words(y,remove_padding=False))
+
