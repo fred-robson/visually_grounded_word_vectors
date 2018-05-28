@@ -230,8 +230,6 @@ class CocoCaptions():
 					if o!=c: 
 						x = self.WV.words_to_indices(c)
 						y = self.WV.words_to_indices(o)
-						x = self.pad_sequences(x)
-						y = self.pad_sequences(y)
 						X.append(x)
 						Y.append(y)
 		return X,Y
@@ -244,12 +242,14 @@ class CocoCaptions():
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
 
-		X,Y1,Y2 = [],[]
+		X,Y1,Y2 = [],[], []
 
 		for captions,image_id in self.get_all_captions():
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
 			for x,y in zip(X_batch,Y_batch):
-				X.append(x)
+				X.append(self.pad_sequences(x))
+				Y1.append(self.pad_sequences(y[:-1]))
+				Y2.append(self.pad_sequences(y[1:]))
 
 			
 		return np.array(X),np.array(Y1),np.array(Y2)
@@ -279,8 +279,8 @@ class CocoCaptions():
 			resnet = self.get_resnet_output(image_id)
 			
 			for x,y in zip(X_batch,Y_batch):
-				X.append(x)
-				Y.append((resnet,y))
+				X.append(self.pad_sequences(x))
+				Y.append((resnet,self.pad_sequences(y)))
 
 		return np.array(X),np.array(Y)
 
@@ -295,6 +295,20 @@ if __name__ == "__main__":
 	Captions = CocoCaptions(3)
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
-	X,Y = Captions.cap2all()
-	for y in Y: print(Captions.WV.indices_to_words(y[1],remove_padding=True))
+	
+	X,Y1,Y2 = Captions.cap2cap()
+	for y1,y2 in zip(Y1,Y2):
+		print(Captions.WV.indices_to_words(y1,remove_padding=True))
+		print(Captions.WV.indices_to_words(y2,remove_padding=True))
 
+
+	X,Y = Captions.cap2resnet()
+	for x,y in zip(X,Y):
+		print(Captions.WV.indices_to_words(x,remove_padding=False))
+		print(y)
+
+	X,Y = Captions.cap2all()
+	for x,y in zip(X,Y):
+		print(Captions.WV.indices_to_words(x,remove_padding=False))
+		print(y[0])
+		print(Captions.WV.indices_to_words(y[1],remove_padding=False))
