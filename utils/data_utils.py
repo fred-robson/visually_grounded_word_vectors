@@ -1,20 +1,26 @@
 #Classes and functions for accessing stuff from data files
-import json, os
+import json, os, sys
+
+base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
+sys.path.insert(0, base_fp) #allows word_vec_utils to be imported
+
 from collections import defaultdict
 from nltk.tokenize import word_tokenize as tokenize
 import scipy.misc
 from tqdm import tqdm
 import pickle as pkl
 import numpy as np
-from word_vec_utils import GloVeVectors,CaptionGloveVectors
+from word_vec_utils import GloVeVectors,CaptionGloveVectors,pad,unk
 from keras.preprocessing.sequence import pad_sequences
 
-base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
+
+
+
 
 
 class CocoCaptions():
 
-	def __init__(self,data=3,WV_type=CaptionGloveVectors):
+	def __init__(self,data=3):
 		'''
 		Data lets you know where to pull the captions from.
 			0 = train
@@ -36,6 +42,7 @@ class CocoCaptions():
 		self.save_loc = base_fp+"saved_items/CocoCaptions_saved_%i.pkl"%data
 		
 		self.data = self.create_data(data_options[data]) #{(image_id,source):[caption1,caption2,....]}
+		self.max_caption_len = self.get_longest_caption()
 
 		self.WordVectors = None
 
@@ -48,7 +55,6 @@ class CocoCaptions():
 							    "tiny":base_fp+"../data/Coco_ResNet/Tiny2014/COCO_train2014_",
 							   }
 		#Will not initialize WV unless necessary 
-		self.WV_type = WV_type
 		self.WV = None
 
 	##########
@@ -121,6 +127,12 @@ class CocoCaptions():
 						out.write(c) 
 						out.write(" ")
 					out.write("\n")
+
+	def get_longest_caption(self):
+		lengths = []
+		for captions,_ in self.get_all_captions():
+			lengths += [len(c) for c in captions]
+		return max(lengths)
 
 	###############
 	# Image Stuff #
@@ -195,30 +207,69 @@ class CocoCaptions():
 	#####################
 	# Loren Model stuff #
 	#####################
+	def initialize_WV(self,WV):
+		self.WV = WV
 
-	def cap2cap(self):
-		'''
-		Builds cap2cap 
-		'''
-		if self.WV is None: 
-			self.WV = self.WV_type()
 
+	def get_caption_convolutions(self,captions):
 		X,Y = [],[]
-
-		for captions,image_id in self.get_all_captions():
-			
-			for c in captions:
+		for c in captions:
 				for o in captions:
 					if o!=c: 
 						x = self.WV.words_to_indices(c)
 						y = self.WV.words_to_indices(o)
+						pad_sequences([x],maxlen=self.max_caption_len,value=self.WV.w2i[pad])
+						pad_sequences([y],maxlen=self.max_caption_len,value=self.WV.w2i[pad])
 						X.append(x)
 						Y.append(y)
-		
+		return X,Y
+
+	def cap2cap(self):
+		'''
+		Returns X,Y where each x_i is a list of indices of a caption
+		and each y_i is a list of indices of a different caption 
+		corresponding to the same image
+		'''
+		if self.WV is None: raise "Call initialize_WV() first"
+
+		X,Y = [],[]
+
+		for captions,image_id in self.get_all_captions():
+			pass
+			
+		return np.array(X),np.array(Y)
+
+	def cap2resnet(self):
+		if self.WV is None: raise "Call initialize_WV() first" 
+
+		X,Y = [],[]
+
+		for captions,image_id in self.get_all_captions():
+			for c in captions:
+				x = self.WV.words_to_indices(c)
+				pad_sequences(x,maxlen=self.max_caption_len,value=self.WV.w2i[pad])
+				X.append(self.WV.words_to_indices(c))
+				Y.append(self.get_resnet_output(image_id))
+
+		return np.array(X),np.array(Y)
+
+	def cap2all(self):
+
+		if self.WV is None: raise "Call initialize_WV() first"
+
+		X,Y = [],[]
+
+		for captions,image_id in self.get_all_captions():
+			X_batch, Y_batch = self.get_caption_convolutions(captions)
+			resnet = self.get_resnet_output(image_id)
+			
+			for x,y in zip(X_batch,Y_batch):
+				X.append(x)
+				Y.append((resnet,y))
+
 		return np.array(X),np.array(Y)
 
 
-				
 
 if __name__ == "__main__":
 	
@@ -227,6 +278,8 @@ if __name__ == "__main__":
 	G = GloVeVectors()
 	'''
 	Captions = CocoCaptions(3)
-	X,Y = Captions.cap2cap()
-	for y in Y: print(Captions.WV.indices_to_words(y))
+	WV = CaptionGloveVectors()
+	Captions.initialize_WV(WV)
+	X,Y = Captions.cap2all()
+	for y in Y: print(Captions.WV.indices_to_words(y[1]))
 
