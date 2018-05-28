@@ -10,6 +10,7 @@ from keras.layers import Embedding
 
 base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
 unk = "<unk>"
+pad = "<pad>"
 
 class WordVectors():
 	'''
@@ -24,9 +25,14 @@ class WordVectors():
 		self.w2i = {w:i for i,w in enumerate(words)}
 
 		if not unk in self.w2i:
-			np.append(self.vectors,np.zeros((dimensions)))
+			self.vectors = np.append(self.vectors,np.zeros((1,self.dimensions)),axis=0)
 			self.w2i[unk] = len(self.i2w)
 			self.i2w.append(unk)
+
+		self.vectors = np.append(self.vectors,np.zeros((1,self.dimensions)),axis=0)
+		self.w2i[pad] = len(self.i2w)
+		self.i2w.append(pad)
+
 
 	def get_vector(self,word):
 		#Retunrs the vector for a particular @word
