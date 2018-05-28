@@ -7,18 +7,21 @@ from keras.layers import Bidirectional
 from keras.layers import LSTM
 from keras.layers import Dense
 from keras.layers import TimeDistributed
+from keras.layers import Embedding
 from tensorflow.contrib.training import HParams
 
 
 class Cap2(object):
 
-	def __init__(self, h_params, model_type='cap2all'):
+	def __init__(self, h_params, embeddings=None,model_type='cap2all'):
 		self.h_params = HParams(**h_params)
+		self.embedding_matrix = embeddings
 		self.model_type = model_type
 		self.model = self.build()
 
 	def _encoder(self):
 		model = Sequential()
+		model.add
 		model.add(Bidirectional(LSTM(hidden_dim, dropout=self.h_params.dropout, recurrent_dropout=self.h_params.dropout, return_sequences=True)))
 		model.add(TimeDistributed(Dense()))
 		return model
@@ -38,6 +41,7 @@ class Cap2(object):
 		if self.mode_type == 'cap2img':
 			model = self._map2latent(model)
 		model.name = self.model_type
+		model.compile()
 		return model
 
 

@@ -6,6 +6,7 @@ import os
 import argparse
 from keras.callbacks import TensorBoard
 from utils.data_utils import CocoCaptions
+from utils.data_utils import GloVeVectors
 
 def hp_search(model_type):
 
@@ -135,10 +136,18 @@ def main():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('-t','--test', help='test')
     parser.add_argument('--model', help='model name', default='cap2all')
+    parser.add_argument('--data', help='data', type=int)
     parser.add_argument('--hp', help='perform hyper parameter search', action='store_true')
     args = parser.parse_args()
-    if args.hp:
-        hp_search(args.model)
-    else:
-        tf.app.run()
+
+    if args.test is None:
+        if args.hp:
+            hp_search(args.model)
+        else:
+            tf.app.run()
+    else:    
+        ## for running any tests
+        caps = CocoCaptions(WV_type=GloVeVectors)
+        vocab = caps.get_vocab()
