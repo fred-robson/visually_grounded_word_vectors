@@ -52,12 +52,6 @@ def main(data = 3,ignore_prev = False):
 		output_np = output.detach().numpy()
 		np.save(save_address,output_np)
 		
-		'''
-		except: 
-			with open(broken_images_file,"wb+") as f:
-				f.write(str(image_id))
-				f.write("\n")
-		'''
 
 
 
