@@ -11,6 +11,9 @@ from keras.layers import Embedding
 base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
 unk = "<unk>"
 pad = "<pad>"
+start = "<start>"
+end = "<end>"
+additional_tokens = [unk,start,end,pad]
 
 class WordVectors():
 	'''
@@ -24,14 +27,14 @@ class WordVectors():
 		self.vectors = vectors #np.arrray(), shape=(num_words,nun_dimensions)
 		self.w2i = {w:i for i,w in enumerate(words)}
 
-		if not unk in self.w2i:
-			self.vectors = np.append(self.vectors,np.zeros((1,self.dimensions)),axis=0)
-			self.w2i[unk] = len(self.i2w)
-			self.i2w.append(unk)
+		for t in additional_tokens:
+			self.add_token(t)
 
-		self.vectors = np.append(self.vectors,np.zeros((1,self.dimensions)),axis=0)
-		self.w2i[pad] = len(self.i2w)
-		self.i2w.append(pad)
+	def add_token(self,token_str,insert_loc=0):
+		if not token_str in self.w2i:
+			self.i2w.insert(0,token_str)
+			self.vectors = np.insert(self.vectors,insert_loc,np.zeros((1,self.dimensions)),axis=0)
+			self.w2i = {w:i for i,w in enumerate(self.i2w)}
 
 
 	def get_vector(self,word):
@@ -45,8 +48,9 @@ class WordVectors():
 			output.append(self.get_vector(w))
 		return np.array(output)
 
-	def words_to_indices(self,words):
+	def words_to_indices(self,words,start_end_padding=True):
 		output = []
+		if start_end_padding: words = [start]+words+[end]
 		for w in words:
 			if w in self.w2i:
 				output.append(self.w2i[w])
@@ -54,7 +58,8 @@ class WordVectors():
 				output.append(self.w2i[unk])
 		return np.array(output)
 
-	def indices_to_words(self,indices):
+	def indices_to_words(self,indices,remove_padding=False):
+		if remove_padding: return [self.i2w[i] for i in indices if not i == self.w2i[pad]]
 		return [self.i2w[i] for i in indices]
 
 	def nearest_neighbors(self,word,k=None,dist_func=cosine):
