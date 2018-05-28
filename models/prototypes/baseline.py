@@ -16,7 +16,7 @@ class Cap2(object):
 		self.h_params = HParams(**h_params)
 		self.model_type = model_type
 		self.model = self.build()
-
+	
 	def _encoder(self):
 		model = Sequential()
 		model.add(Bidirectional(LSTM(hidden_dim, dropout=encoder_dropout, recurrent_dropout=encoder_dropout, return_sequences=True)))
