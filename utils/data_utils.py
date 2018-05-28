@@ -235,7 +235,11 @@ class CocoCaptions():
 		X,Y = [],[]
 
 		for captions,image_id in self.get_all_captions():
-			pass
+			X_batch, Y_batch = self.get_caption_convolutions(captions)
+			
+			for x,y in zip(X_batch,Y_batch):
+				X.append(x)
+				Y.append(y)
 			
 		return np.array(X),np.array(Y)
 
@@ -280,6 +284,7 @@ if __name__ == "__main__":
 	Captions = CocoCaptions(3)
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
-	X,Y = Captions.cap2all()
-	for y in Y: print(Captions.WV.indices_to_words(y[1]))
+	X,Y = Captions.cap2cap()
+	for y in Y: 
+		print(Captions.WV.indices_to_words(y))
 

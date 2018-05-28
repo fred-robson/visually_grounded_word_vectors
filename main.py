@@ -12,6 +12,11 @@ def hp_search(model_type):
 
     from hpsearch.hyperband_skopt import HPSearcher
 
+    Captions = CocoCaptions(3)
+    WV = GloVeVectors()
+    Captions.initialize_WV(WV)
+    X,Y = Captions.cap2cap()
+
     def _log_dir_name(learning_rate, hidden_dim):
 
         # The dir-name for the TensorBoard log-dir.
@@ -60,7 +65,7 @@ def hp_search(model_type):
             write_images=False)
        
         # Use Keras to train the model.
-        history = model.fit(x=data.train.images,
+        history = model.model.fit(x=data.train.images,
                             y=data.train.labels,
                             epochs=3,
                             batch_size=128,
@@ -153,4 +158,5 @@ if __name__ == '__main__':
         WV = GloVeVectors()
         Captions.initialize_WV(WV)
         X,Y = Captions.cap2cap()
-        for y in Y: print(Captions.WV.indices_to_words(y[1]))
+        for y in Y:
+            print(Captions.WV.indices_to_words(y))
