@@ -3,7 +3,7 @@
 data/*
 utils/GloVe/corpus
 utils/saved_items/*
-
+#.DS_Store
 
 
 # Byte-compiled / optimized / DLL files
