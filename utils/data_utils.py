@@ -179,7 +179,6 @@ class CocoCaptions():
 	# Loren Model stuff #
 	#####################
 
-	def 
 
 
 
