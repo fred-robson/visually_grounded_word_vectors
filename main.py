@@ -5,7 +5,7 @@ import keras
 import os
 import argparse
 from keras.callbacks import TensorBoard
-from utils.data_utils import 
+from utils.data_utils import CocoCaptions
 
 def hp_search(model_type):
 
@@ -38,7 +38,7 @@ def hp_search(model_type):
         if model_type[:4] == "cap2":
             from models.prototypes.baseline import Cap2
             params = {'learning_rate':learning_rate, 'hidden_dim':hidden_dim,
-                 'optimizer':optimizer}
+                 'optimizer':optimizer, 'dropout': 0.5}
             model = Cap2(params, model_type=model_type)
 
         # Dir-name for the TensorBoard log-files.
