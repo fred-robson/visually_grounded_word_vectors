@@ -56,7 +56,7 @@ def main(data = 3,ignore_prev = False):
 
 
 if __name__ == "__main__":
-	main(3,True)
+	main(3,False)
 	#main(2,True)
 
 
