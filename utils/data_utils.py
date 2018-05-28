@@ -6,19 +6,24 @@ import scipy.misc
 from tqdm import tqdm
 import pickle as pkl
 import numpy as np
+from word_vec_utils import GloVeVectors,CaptionGloveVectors
+from keras.preprocessing.sequence import pad_sequences
 
 base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
 
 
 class CocoCaptions():
 
-	def __init__(self,data=3):
+	def __init__(self,data=3,WV_type=CaptionGloveVectors):
 		'''
 		Data lets you know where to pull the captions from.
 			0 = train
 			1 = val
 			2 = train and val
 			3 = tiny (Note that tiny is a subset of train)
+
+		WV is the kind of word vectors you want to use. Is only necessary for Loren's stuff
+		for now 
 		'''
 		val_file   = base_fp+"../data/Coco/Annotations/captions_val2014.json"
 		train_file = base_fp+"../data/Coco/Annotations/captions_train2014.json" 
@@ -29,7 +34,10 @@ class CocoCaptions():
 		data_options = {0:[train_file],1:[val_file],2:[train_file,val_file],3:[tiny_file]}
 
 		self.save_loc = base_fp+"saved_items/CocoCaptions_saved_%i.pkl"%data
+		
 		self.data = self.create_data(data_options[data]) #{(image_id,source):[caption1,caption2,....]}
+
+		self.WordVectors = None
 
 		self.image_locations = {"train":base_fp+"../data/Coco/Train2014/COCO_train2014_",
 							    "val":base_fp+"../data/Coco/Val2014/COCO_val2014_",
@@ -39,6 +47,9 @@ class CocoCaptions():
 							    "val":base_fp+"../data/Coco_ResNet/Val2014/COCO_val2014_",
 							    "tiny":base_fp+"../data/Coco_ResNet/Tiny2014/COCO_train2014_",
 							   }
+		#Will not initialize WV unless necessary 
+		self.WV_type = WV_type
+		self.WV = None
 
 	##########
 	# Set Up #
@@ -90,7 +101,13 @@ class CocoCaptions():
 		return self.data[image_id]
 
 	def get_all_captions(self):
-		return self.data
+		keys = list(self.data.keys())
+		i = 0
+		len_keys = len(keys)
+		while i < len_keys:
+			k = keys[i]
+			yield self.get_captions(k),k
+			i+=1
 
 	def build_corpus(self):
 		'''
@@ -179,8 +196,29 @@ class CocoCaptions():
 	# Loren Model stuff #
 	#####################
 
+	def cap2cap(self):
+		'''
+		Builds cap2cap 
+		'''
+		if self.WV is None: 
+			self.WV = self.WV_type()
+
+		X,Y = [],[]
+
+		for captions,image_id in self.get_all_captions():
+			
+			for c in captions:
+				for o in captions:
+					if o!=c: 
+						x = self.WV.words_to_indices(c)
+						y = self.WV.words_to_indices(o)
+						X.append(x)
+						Y.append(y)
+		
+		return np.array(X),np.array(Y)
 
 
+				
 
 if __name__ == "__main__":
 	
@@ -189,5 +227,6 @@ if __name__ == "__main__":
 	G = GloVeVectors()
 	'''
 	Captions = CocoCaptions(3)
-	Captions.get_image((366897,"tiny"))
+	X,Y = Captions.cap2cap()
+	for y in Y: print(Captions.WV.indices_to_words(y))
 

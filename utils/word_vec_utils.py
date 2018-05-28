@@ -5,10 +5,11 @@ from scipy.spatial.distance import cosine
 import os
 import numpy as np
 from tqdm import tqdm
+from keras.layers import Embedding
 
 
 base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
-
+unk = "<unk>"
 
 class WordVectors():
 	'''
@@ -22,9 +23,33 @@ class WordVectors():
 		self.vectors = vectors #np.arrray(), shape=(num_words,nun_dimensions)
 		self.w2i = {w:i for i,w in enumerate(words)}
 
+		if not unk in self.w2i:
+			np.append(self.vectors,np.zeros((dimensions)))
+			self.w2i[unk] = len(self.i2w)
+			self.i2w.append(unk)
+
 	def get_vector(self,word):
 		#Retunrs the vector for a particular @word
 		return self.vectors[self.w2i[word]]
+
+	def words_to_vectors(self,words):
+		#converts a list of words into an np array 
+		output = []
+		for w in words:
+			output.append(self.get_vector(w))
+		return np.array(output)
+
+	def words_to_indices(self,words):
+		output = []
+		for w in words:
+			if w in self.w2i:
+				output.append(self.w2i[w])
+			else: 
+				output.append(self.w2i[unk])
+		return np.array(output)
+
+	def indices_to_words(self,indices):
+		return [self.i2w[i] for i in indices]
 
 	def nearest_neighbors(self,word,k=None,dist_func=cosine):
 		'''
@@ -56,8 +81,12 @@ class WordVectors():
 		self.vectors = new_vectors
 		self.w2i = {w:i for i,w in enumerate(new_i2w)}
 
-	def get_embedding_matrix(self):
-		return self.vectors
+	def get_embedding_matrix(self,input_length,trainable=False):
+		return Embedding(len(self.i2w),
+						 self.dimensions,
+						 weights = self.vectors,
+						 input_length = input_length,
+						 trainable = trainable)
 
 
 def load_txt_vectors(filepath,dimensions):
@@ -103,8 +132,8 @@ class CaptionGloveVectors(WordVectors):
 
 if __name__ == "__main__":
 	X = CaptionGloveVectors()
-	print(len(X.get_vocab()))
-	print(type(X.get_embedding_matrix()))
+	print(X.words_to_vectors(["man","woman"]).shape)
+
 
 
 
