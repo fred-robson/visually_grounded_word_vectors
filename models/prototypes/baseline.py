@@ -10,9 +10,7 @@ from keras.layers import Dense
 from keras.layers import TimeDistributed
 from keras.layers import Embedding
 from keras.layers import Maximum
-<<<<<<< HEAD
 from keras.layers import Masking
->>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
 from tensorflow.contrib.training import HParams
 import keras.backend as K
 

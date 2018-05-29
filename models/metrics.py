@@ -10,8 +10,12 @@ class Metrics(Callback):
         self.val_precisions = []
 
     def on_epoch_end(self, epoch, logs={}):
-        val_predict = (np.asarray(self.model.predict(self.model.validation_data[0]))).round()
-        val_targ = self.model.validation_data[1]
+        val_predict = (np.asarray(self.model.predict(self.validation_data[0]))).round()
+        
+        val_predict = np.argmax(val_predict, axis=2)
+
+        val_targ = self.validation_data[1]
+
         _val_precision, _val_recall, _val_f1, _ = precision_recall_fscore_support(val_targ, val_predict, average='macro')
         self.val_f1s.append(_val_f1)
         self.val_recalls.append(_val_recall)

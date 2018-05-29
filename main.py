@@ -11,6 +11,14 @@ from models.metrics import Metrics
 from models.prototypes.baseline import Cap2
 from tensorflow.contrib.training import HParams
 from skopt.utils import use_named_args
+from keras.models import Model 
+from keras.models import Sequential
+from keras.layers import Input
+from keras.layers import Bidirectional
+from keras.layers import LSTM
+from keras.layers import Dense
+from keras.layers import TimeDistributed
+from keras.layers import Embedding
 
 def hp_search(args):
 
@@ -46,6 +54,7 @@ def hp_search(args):
         # Print the hyper-parameters.
         print('learning rate: {0:.1e}'.format(learning_rate))
         print('hidden_dim:', hidden_dim)
+        print('optimizer:', optimizer)
         print()
         
         # Dir-name for the TensorBoard log-files.
@@ -67,47 +76,69 @@ def hp_search(args):
 
         model = None
         history = None
+        validation_data=None
         # Create the neural network with these hyper-parameters.
-        if args.model[:4] == "cap2":
-            inputs, outputs = None, None
 
-            if args.model == 'cap2cap':
-                X, Y1, Y2 = Captions.cap2cap()
-                Y2 = np.expand_dims(Y2, axis=2)
-                validation_data=None
-                inputs = {'encoder_input': X, 'decoder_input': Y1}
-                outputs = {'decoder_output': Y2}
+        if args.model == 'toy':
 
-            if args.model == 'cap2img':
-                X, Y = Captions.cap2img()
-                inputs = {'encoder_input': X}
-                outputs = {'resnet_output': Y}
+            X = np.random.randint(0, 6, size=(3000,50))
+            Y = np.random.randint(0, 6, size=(3000,50,1))
 
-            if args.model == 'cap2all':
-                X, Y1, Y2, Y3 = Captions.cap2all()
-                inputs = {'encoder_input': X, 'decoder_input': Y1}
-                outputs = {'resnet_output': Y3, 'decoder_output': Y2}
-
-            hparams = HParams(learning_rate=learning_rate, hidden_dim=hidden_dim,
-                        optimizer=optimizer, dropout= 0.5, 
-                        max_seq_length=inputs['encoder_input'].shape[1],
-                        embed_dim=embedding_matrix.shape[-1],
-                        num_embeddings=embedding_matrix.shape[0])
-            cap2 = Cap2(hparams, model_type=args.model, embeddings=embedding_matrix)
-
-            model = cap2.model
-            history = model.fit(inputs,
-                            outputs,
+            model = Sequential()
+            model.add(Embedding(6, 50, input_length=50))
+            model.add(Dense(300, activation='relu'))
+            model.add(Dense(6, activation='softmax'))
+            model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+            history = model.fit(X,
+                            Y,
                             epochs=3,
                             batch_size=128,
                             validation_split=0.2,
                             validation_data=validation_data,
                             callbacks=[callback_log, metrics])
+        else:
+            if args.model[:4] == "cap2":
+                inputs, outputs = None, None
+
+                if args.model == 'cap2cap':
+                    X, Y1, Y2 = Captions.cap2cap()
+                    Y2 = np.expand_dims(Y2, axis=2)
+                    validation_data=None
+                    inputs = {'encoder_input': X, 'decoder_input': Y1}
+                    outputs = {'decoder_output': Y2}
+
+                if args.model == 'cap2img':
+                    X, Y = Captions.cap2img()
+                    inputs = {'encoder_input': X}
+                    outputs = {'resnet_output': Y}
+
+                if args.model == 'cap2all':
+                    X, Y1, Y2, Y3 = Captions.cap2all()
+                    inputs = {'encoder_input': X, 'decoder_input': Y1}
+                    outputs = {'resnet_output': Y3, 'decoder_output': Y2}
+
+                hparams = HParams(learning_rate=learning_rate, hidden_dim=hidden_dim,
+                            optimizer=optimizer, dropout= 0.5, 
+                            max_seq_length=inputs['encoder_input'].shape[1],
+                            embed_dim=embedding_matrix.shape[-1],
+                            num_embeddings=embedding_matrix.shape[0])
+                cap2 = Cap2(hparams, model_type=args.model, embeddings=embedding_matrix)
+
+                model = cap2.model
+                history = model.fit(inputs,
+                                outputs,
+                                epochs=3,
+                                batch_size=128,
+                                validation_split=0.2,
+                                validation_data=validation_data,
+                                callbacks=[callback_log, metrics])
 
 
         # Get the classification accuracy on the validation-set
         # after the last training-epoch.
-        f1 = mectrics.val_f1s[-1]
+        
+        #f1 = mectrics.val_f1s[-1]
+        f1 = 1
 
         # Print the classification accuracy.
         print()
