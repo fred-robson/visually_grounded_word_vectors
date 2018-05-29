@@ -95,7 +95,7 @@ def hp_search(args):
                             batch_size=128,
                             validation_split=0.2,
                             validation_data=validation_data,
-                            callbacks=[callback_log, metrics])
+                            callbacks=[callback_log])
         else:
             if args.model[:4] == "cap2":
                 inputs, outputs = None, None
@@ -131,7 +131,7 @@ def hp_search(args):
                                 batch_size=128,
                                 validation_split=0.2,
                                 validation_data=validation_data,
-                                callbacks=[callback_log, metrics])
+                                callbacks=[callback_log])
 
 
         # Get the classification accuracy on the validation-set
@@ -149,7 +149,6 @@ def hp_search(args):
         # We use the global keyword so we update the variable outside
         # of this function.
         global best_f1
-
         # If the classification accuracy of the saved model is improved ...
         if f1 > best_f1:
             # Save the new model to harddisk.
@@ -171,7 +170,9 @@ def hp_search(args):
         # accuracy, we need to negate this number so it can be minimized.
         return -f1
 
+    best_f1 = 0
     hp_searcher = HPSearcher([0.0001, 100, 'sgd'])
+    print('ji')
     results = hp_searcher.run(_fitness)
 
 
