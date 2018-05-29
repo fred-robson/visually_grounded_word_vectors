@@ -10,7 +10,9 @@ from keras.layers import Dense
 from keras.layers import TimeDistributed
 from keras.layers import Embedding
 from keras.layers import Maximum
+<<<<<<< HEAD
 from keras.layers import Masking
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
 from tensorflow.contrib.training import HParams
 import keras.backend as K
 
@@ -18,16 +20,19 @@ import keras.backend as K
 class Cap2(object):
 
 	def __init__(self, h_params, embeddings=None,model_type='cap2all'):
+<<<<<<< HEAD
 		if type(h_params) is HParams:
 			self.h_params = h_params
 		else:
 			self.h_params = HParams(**h_params)
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
 		self.embedding_matrix = embeddings
 		self.model_type = model_type
 		self.model = self.build()
 
 	def build(self):
 		model=None
+<<<<<<< HEAD
 		inputs=[]
 		outputs=[]
 		loss={}
@@ -70,13 +75,13 @@ class Cap2(object):
 			outputs += [decoder_output]
 			if self.model_type == 'cap2cap':
 				loss['decoder_output'] = 'sparse_categorical_crossentropy'
-
-
-
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
 
 		model = Model(inputs=inputs, outputs=outputs)
 		
 		model.name = self.model_type
+<<<<<<< HEAD
 		model.compile(loss=loss,optimizer=self.h_params.optimizer,metrics=['sparse_categorical_accuracy'])
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
 		return model
 

@@ -16,7 +16,9 @@ class Metrics(Callback):
         self.val_f1s.append(_val_f1)
         self.val_recalls.append(_val_recall)
         self.val_precisions.append(_val_precision)
+<<<<<<< HEAD
         print(" — val_f1: {0} — val_precision: {1} — val_recall {2}".format(_val_f1, _val_precision, _val_recall))
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
         return
  
 if __name__ == '__main__':

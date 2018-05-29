@@ -9,8 +9,11 @@ from utils.data_utils import CocoCaptions
 from utils.data_utils import GloVeVectors
 from models.metrics import Metrics
 from models.prototypes.baseline import Cap2
+<<<<<<< HEAD
 from tensorflow.contrib.training import HParams
 from skopt.utils import use_named_args
+=======
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
 
 def hp_search(args):
 
@@ -26,16 +29,19 @@ def hp_search(args):
     def _log_dir_name(learning_rate, hidden_dim, optimizer):
 
         # The dir-name for the TensorBoard log-dir.
+<<<<<<< HEAD
         s = "./logs/lr_{0:.0e}_hidden_dim_{1}_opt_{2}/"
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
 
         # Insert all the hyper-parameters in the dir-name.
         log_dir = s.format(learning_rate,
                            hidden_dim, optimizer)
         return log_dir
 
+<<<<<<< HEAD
     hp_searcher = HPSearcher([0.0001, 100, 'sgd'])
     dimensions = hp_searcher._search_space()
-
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
     @use_named_args(dimensions=dimensions)
     def _fitness(learning_rate, hidden_dim, optimizer):
         """
@@ -72,6 +78,7 @@ def hp_search(args):
         if args.model[:4] == "cap2":
             inputs, outputs = None, None
 
+<<<<<<< HEAD
             if args.model == 'cap2cap':
                 X, Y1, Y2 = Captions.cap2cap()
                 Y2 = np.expand_dims(Y2, axis=2)
@@ -80,34 +87,43 @@ def hp_search(args):
                 outputs = {'decoder_output': Y2}
 
             if args.model == 'cap2img':
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
                 X, Y = Captions.cap2img()
                 inputs = {'encoder_input': X}
                 outputs = {'resnet_output': Y}
 
+<<<<<<< HEAD
             if args.model == 'cap2all':
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
                 X, Y1, Y2, Y3 = Captions.cap2all()
                 inputs = {'encoder_input': X, 'decoder_input': Y1}
                 outputs = {'resnet_output': Y3, 'decoder_output': Y2}
 
+<<<<<<< HEAD
             hparams = HParams(learning_rate=learning_rate, hidden_dim=hidden_dim,
                         optimizer=optimizer, dropout= 0.5, 
                         max_seq_length=inputs['encoder_input'].shape[1],
                         embed_dim=embedding_matrix.shape[-1],
                         num_embeddings=embedding_matrix.shape[0])
             cap2 = Cap2(hparams, model_type=args.model, embeddings=embedding_matrix)
-            print("huh")
+
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
             model = cap2.model
             history = model.fit(inputs,
                             outputs,
                             epochs=3,
                             batch_size=128,
+<<<<<<< HEAD
                             validation_split=0.2,
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
                             validation_data=validation_data,
                             callbacks=[callback_log, metrics])
 
 
        
-        print("huh2")    
+<<<<<<< HEAD
+
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
         # Get the classification accuracy on the validation-set
         # after the last training-epoch.
         f1 = mectrics.val_f1s[-1]
@@ -143,7 +159,9 @@ def hp_search(args):
         # accuracy, we need to negate this number so it can be minimized.
         return -f1
 
+<<<<<<< HEAD
     hp_searcher = HPSearcher([0.0001, 100, 'sgd'])
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
     results = hp_searcher.run(_fitness)
 
 
@@ -181,15 +199,21 @@ if __name__ == '__main__':
     parser.add_argument('-t', help='test', action='store_true')
     parser.add_argument('--model', help='model name', default='cap2all')
     parser.add_argument('--data', help='data', type=int)
+<<<<<<< HEAD
     parser.add_argument('-hp', help='perform hyper parameter search', action='store_true')
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
     args = parser.parse_args()
 
     if args.t is False:
         if args.hp:
+<<<<<<< HEAD
             hp_search(args)
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
         else:
             tf.app.run()
     else:    
         ## for running any tests
+<<<<<<< HEAD
         hparams = HParams()
         print(type(hparams) is HParams)
+>>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
