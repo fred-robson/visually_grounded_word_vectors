@@ -272,7 +272,7 @@ class CocoCaptions():
 
 		if self.WV is None: raise "Call initialize_WV() first"
 
-		X,Y1,Y2,Y3 = [],[],[],[]
+		X,Y1,Y2,Y3 = [],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
 
 		for captions,image_id in self.get_all_captions():
 			X_batch, Y_batch = self.get_caption_convolutions(captions)

@@ -5,7 +5,6 @@ from scipy.spatial.distance import cosine
 import os
 import numpy as np
 from tqdm import tqdm
-from keras.layers import Embedding
 
 
 base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
@@ -87,7 +86,7 @@ class WordVectors():
 		new_i2w = list(words)
 		new_vectors = np.zeros(shape=(len(new_i2w),len(self.vectors[0])))
 		for i,w in enumerate(new_i2w):
-			new_vectors[i] = self.get_vector(w)
+			if w in self.w2i: new_vectors[i] = self.get_vector(w)
 		self.i2w = new_i2w
 		self.vectors = new_vectors
 		self.w2i = {w:i for i,w in enumerate(new_i2w)}
@@ -115,6 +114,15 @@ def load_txt_vectors(filepath,dimensions):
 
 	return words,vectors
 
+def build_filtered_vectors():
+	x = CaptionGloveVectors()
+	for d in {50,100,200,300}:
+		y = GloVeVectors(d)
+		y.filter_wv(x.i2w)
+		with open(base_fp+"../data/Vectors/FilteredGlove/vectors%d.txt"%d,"w+") as f:
+			for i,v in enumerate(y.vectors):
+				line = y.i2w[i] +' '+ ' '.join(map(str, v))+'\n'
+				f.write(line)
 
 class GloVeVectors(WordVectors):
 
@@ -137,9 +145,26 @@ class CaptionGloveVectors(WordVectors):
 		words,vectors = load_txt_vectors(filepath,dimensions)
 		WordVectors.__init__(self,words,vectors)
 
+class FilteredGloveVectors(WordVectors):
+	#Same value as the GloveVectors, but filtered to only include vocab from the Captions
+
+	def __init__(self,dimensions=50):
+		if not dimensions in {50,100,200,300}: #Update as more dimensions added 
+			raise ValueError("GloVe Dimension does not exist")
+		filepath = base_fp+"../data/Vectors/FilteredGlove/vectors%d.txt"%dimensions
+		self.dimensions = dimensions
+		words,vectors = load_txt_vectors(filepath,dimensions)
+		WordVectors.__init__(self,words,vectors)
+
 if __name__ == "__main__":
-	X = CaptionGloveVectors()
-	print(X.words_to_vectors(["man","woman"]).shape)
+	build_filtered_vectors()
+	for d in {50,100,200,300}:
+		F = FilteredGloveVectors(d)
+
+
+	
+
+	
 
 
 
