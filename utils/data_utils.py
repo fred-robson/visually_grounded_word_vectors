@@ -255,6 +255,8 @@ class CocoCaptions(CaptionsSuper):
 		data = defaultdict(lambda:[])
 		loaded_jsons = []
 
+		file_names = data_options[data_type]
+
 		for f in file_names: 
 			loaded_jsons=load_json(f)
 
