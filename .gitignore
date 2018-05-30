@@ -113,3 +113,4 @@ Pipfile.lock
 *.orig
 logs/*
 models/saved/*
+*.keras
