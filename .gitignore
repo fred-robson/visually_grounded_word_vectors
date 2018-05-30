@@ -111,6 +111,6 @@ ENV/
 Pipfile
 Pipfile.lock
 *.orig
-<<<<<<< HEAD
 logs/*
->>>>>>> e4af9544b71e260081ee55e72d983efee44448c8
+models/saved/*
+*.keras
