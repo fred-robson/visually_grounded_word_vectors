@@ -158,6 +158,12 @@ class CaptionsSuper():
 						Y.append(y)
 		return X,Y
 
+	def get_captions_list(self):
+		caps = self.get_all_captions()
+		captions = [cap[0] for cap in caps]
+		return captions
+
+
 	def cap2cap(self):
 		'''
 		Returns X,Y where each x_i is a list of indices of a caption
