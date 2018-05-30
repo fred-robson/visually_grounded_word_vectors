@@ -136,7 +136,7 @@ class GloVeVectors(WordVectors):
 
 
 class CaptionGloveVectors(WordVectors):
-
+	#Vectors trained on Captions
 	def __init__(self,dimensions=50):
 		if not dimensions in {50}: #Update as more dimensions added 
 			raise ValueError("GloVe Dimension does not exist")
