@@ -56,7 +56,9 @@ def main(Captions,ignore_prev = False):
 
 
 if __name__ == "__main__":
-	main(FlickrCaptions(),True)
+	main(FlickrCaptions(0),True)
+	main(FlickrCaptions(1),True)
+	main(FlickrCaptions(3),True)
 	#main(2,True)
 
 
