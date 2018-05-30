@@ -1,7 +1,7 @@
 import torch 
 import torchvision.models as models
 import torchvision.transforms as transforms
-from data_utils import CocoCaptions
+from data_utils import CocoCaptions,FlickrCaptions
 import numpy as np
 from tqdm import tqdm
 import os
@@ -19,7 +19,7 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
 '''
 
-def main(data = 3,ignore_prev = False):
+def main(Captions,ignore_prev = False):
 	'''
 	Creates output for data loaded from coco. @data refers to what CocoCaptions type to load 
 	'''
@@ -27,11 +27,11 @@ def main(data = 3,ignore_prev = False):
 	Model = models.resnet101(pretrained = True).eval()
 	Model = Model.float()
 
-	coco = CocoCaptions(data)
+	
 
-	for image,image_id in tqdm(coco.get_all_images(),total=coco.num_images()):
+	for image,image_id in tqdm(Captions.get_all_images(),total=Captions.num_images()):
 		
-		save_address = coco.get_image_resnet_address(image_id)
+		save_address = Captions.get_image_resnet_address(image_id)
 		if os.path.isfile(save_address) and ignore_prev: continue 
 
 		#Convert to PiL image for resizing + croppping 
@@ -56,7 +56,7 @@ def main(data = 3,ignore_prev = False):
 
 
 if __name__ == "__main__":
-	main(3,False)
+	main(FlickrCaptions(),True)
 	#main(2,True)
 
 
