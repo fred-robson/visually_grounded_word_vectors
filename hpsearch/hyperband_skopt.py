@@ -26,16 +26,18 @@ from models.metrics import Metrics
 from models.prototypes.baseline import Cap2
 from tensorflow.contrib.training import HParams
 from skopt.utils import use_named_args
+from datetime import datetime
 
 
-def _log_dir_name(learning_rate, hidden_dim, optimizer):
+def _log_dir_name(learning_rate, model):
 
+    date = str(datetime.now()).split(" ")[0]
     # The dir-name for the TensorBoard log-dir.
-    s = "./logs/lr_{0:.0e}_hidden_dim_{1}_opt_{2}/"
+    s = "./logs/lr_{0:.0e}_model_{1}_on_{2}/"
 
     # Insert all the hyper-parameters in the dir-name.
     log_dir = s.format(learning_rate,
-                       hidden_dim, optimizer)
+                       model, date)
     return log_dir
 
 class HPSearcher(object):
@@ -55,14 +57,14 @@ class HPSearcher(object):
     def _search_space(self):
         space_learning_rate = Real(low=1e-6, high=1e-2, prior='log-uniform',
                  name='learning_rate')
-        space_hidden_dim = Integer(low=5, high=512, name='hidden_dim')
-        space_optimizers = Categorical(categories=['adam','sgd'],name='optimizer')
-        return [space_learning_rate, space_hidden_dim, space_optimizers]
+        #space_hidden_dim = Integer(low=5, high=512, name='hidden_dim')
+        #space_optimizers = Categorical(categories=['adam','sgd'],name='optimizer')
+        return [space_learning_rate]
 
     def run(self):
 
         @use_named_args(dimensions=self._search_space())
-        def _fitness(learning_rate, hidden_dim, optimizer):
+        def _fitness(learning_rate):
             """
             Hyper-parameters:
             learning_rate:     Learning-rate for the optimizer.
@@ -71,12 +73,10 @@ class HPSearcher(object):
 
             # Print the hyper-parameters.
             print('learning rate: {0:.1e}'.format(learning_rate))
-            print('hidden_dim:', hidden_dim)
-            print('optimizer:', optimizer)
             print()
             
             # Dir-name for the TensorBoard log-files.
-            log_dir = _log_dir_name(learning_rate, hidden_dim, optimizer)
+            log_dir = _log_dir_name(learning_rate, self.model)
             
             # Create a callback-function for Keras which will be
             # run after each epoch has ended during training.
@@ -135,8 +135,8 @@ class HPSearcher(object):
                         inputs = {'encoder_input': X, 'decoder_input': Y1}
                         outputs = {'resnet_output': Y3, 'decoder_output': Y2}
 
-                    hparams = HParams(learning_rate=learning_rate, hidden_dim=hidden_dim,
-                                optimizer=optimizer, dropout= 0.5, 
+                    hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
+                                optimizer='adam', dropout= 0.5, 
                                 max_seq_length=inputs['encoder_input'].shape[1],
                                 embed_dim=self.embedding_matrix.shape[-1],
                                 num_embeddings=self.embedding_matrix.shape[0])
