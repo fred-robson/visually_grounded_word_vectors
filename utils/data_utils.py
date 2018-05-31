@@ -174,7 +174,7 @@ class CaptionsSuper():
 
 		IDs, X,Y1,Y2 = [],[],[],[]
 
-		for captions,image_id in tqdm(self.get_all_captions(),,desc="Loading cap2cap"):
+		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2cap"):
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
 			for x,y in zip(X_batch,Y_batch):
 				X.append(self.pad_sequences(x))
