@@ -174,7 +174,7 @@ class CaptionsSuper():
 
 		IDs, X,Y1,Y2 = [],[],[],[]
 
-		for captions,image_id in self.get_all_captions():
+		for captions,image_id in tqdm(self.get_all_captions(),,desc="Loading cap2cap"):
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
 			for x,y in zip(X_batch,Y_batch):
 				X.append(self.pad_sequences(x))
@@ -190,7 +190,7 @@ class CaptionsSuper():
 
 		IDs,X,Y = [],[],[]
 
-		for captions,image_id in self.get_all_captions():
+		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2resnet"):
 			resnet = self.get_resnet_output(image_id)
 			for c in captions:
 				x = self.WV.words_to_indices(c)
@@ -207,7 +207,7 @@ class CaptionsSuper():
 
 		IDs,X,Y1,Y2,Y3 = [],[],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
 
-		for captions,image_id in self.get_all_captions():
+		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2all"):
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
 			resnet = self.get_resnet_output(image_id)
 			for x,y in zip(X_batch,Y_batch):
