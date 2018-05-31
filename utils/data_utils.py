@@ -1,5 +1,5 @@
 #Classes and functions for accessing stuff from data files
-import json, os, sys
+import json, os, sys,random
 
 base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
 sys.path.insert(0, base_fp) #allows word_vec_utils to be imported
@@ -172,7 +172,7 @@ class CaptionsSuper():
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
 
-		X,Y1,Y2 = [],[], []
+		IDs, X,Y1,Y2 = [],[],[],[]
 
 		for captions,image_id in self.get_all_captions():
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
@@ -180,14 +180,15 @@ class CaptionsSuper():
 				X.append(self.pad_sequences(x))
 				Y1.append(self.pad_sequences(y[:-1]))
 				Y2.append(self.pad_sequences(y[1:]))
+				IDs.append(image_id)
 
 			
-		return np.array(X),np.array(Y1),np.array(Y2)
+		return np.array(IDs),np.array(X),np.array(Y1),np.array(Y2)
 
 	def cap2resnet(self):
 		if self.WV is None: raise "Call initialize_WV() first" 
 
-		X,Y = [],[]
+		IDs,X,Y = [],[],[]
 
 		for captions,image_id in self.get_all_captions():
 			for c in captions:
@@ -195,14 +196,15 @@ class CaptionsSuper():
 				x = self.pad_sequences(x)
 				X.append(self.WV.words_to_indices(c))
 				Y.append(self.get_resnet_output(image_id))
+				IDs.append(image_id)
 
-		return np.array(X),np.array(Y)
+		return np.array(IDs),np.array(X),np.array(Y)
 
 	def cap2all(self):
 
 		if self.WV is None: raise "Call initialize_WV() first"
 
-		X,Y1,Y2,Y3 = [],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
+		IDs,X,Y1,Y2,Y3 = [],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
 
 		for captions,image_id in self.get_all_captions():
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
@@ -213,8 +215,24 @@ class CaptionsSuper():
 				Y1.append(self.pad_sequences(y[:-1]))
 				Y2.append(self.pad_sequences(y[1:]))
 				Y3.append(self.get_resnet_output(image_id))
+				IDs.append(image_id)
 
-		return np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)
+		return  np.array(IDs),np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)
+
+	def get_negative_samples(self,image_id_list,num_negative=5):
+
+		ret = []
+		
+		for image_id in image_id_list:
+			to_sample = set(self.data.keys())-{image_id}
+			negative_samples = []
+			for neg in random.sample(to_sample,num_negative):
+				negative_samples.append(self.get_resnet_output(neg).flatten())
+			ret.append(negative_samples)
+
+		return np.array(ret)
+
+
 
 
 class CocoCaptions(CaptionsSuper):
@@ -378,9 +396,6 @@ class FlickrCaptions(CaptionsSuper):
 
 		return data
 		
-		
-
-
 
 	###################
 	# Address Finders #
@@ -398,25 +413,26 @@ class FlickrCaptions(CaptionsSuper):
 def test_CocoCaptions():
 
 	Captions = CocoCaptions(3)
-	for a,b in Captions.get_all_captions():
-		print(a,b)
-		quit()
 
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
 
-	X,Y1,Y2 = Captions.cap2cap()
+	ret = Captions.get_negative_samples([('1355','tiny'), ('78','tiny')])
+	print(ret.shape)
+	quit()
+
+	IDs,X,Y1,Y2 = Captions.cap2cap()
 	for y1,y2 in zip(Y1,Y2):
 		print(Captions.WV.indices_to_words(y1,remove_padding=True))
 		print(Captions.WV.indices_to_words(y2,remove_padding=True))
 
 
-	X,Y = Captions.cap2resnet()
+	IDs, X,Y = Captions.cap2resnet()
 	for x,y in zip(X,Y):
 		print(Captions.WV.indices_to_words(x,remove_padding=False))
 		print(y)
 
-	X,Y1,Y2,Y3 = Captions.cap2all()
+	IDs,X,Y1,Y2,Y3 = Captions.cap2all()
 	print(Y1)
 	for x,y in zip(X,Y1):
 		print(Captions.WV.indices_to_words(x,remove_padding=False))
