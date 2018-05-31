@@ -32,7 +32,7 @@ def hp_search(args):
     embedding_matrix = WV.get_embedding_matrix()
     metrics = Metrics()
 
-    hp_searcher = HPSearcher([0.0001], embedding_matrix, args.model, Captions, custom_metrics = [metrics])
+    hp_searcher = HPSearcher([0.0001], embedding_matrix, args.model, Captions, custom_metrics = [metrics], max_samples=args.max_samples)
     results = hp_searcher.run()
 
 
@@ -69,13 +69,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', help='test', action='store_true')
     parser.add_argument('--model', help='model name', default='cap2all')
-    parser.add_argument('--data', help='data', type=int)
+    parser.add_argument('--data', help='data', type=int, default=3)
     parser.add_argument('-hp', help='perform hyper parameter search', action='store_true')
+    parser.add_argument('--max_samples', help='maximum number of data samples to train on', type=int, default=None)
     args = parser.parse_args()
 
     if args.t is False:
         if args.hp:
-
             hp_search(args)
         else:
             tf.app.run()

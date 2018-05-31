@@ -10,9 +10,18 @@ class Metrics(Callback):
         self.val_precisions = []
 
     def on_epoch_end(self, epoch, logs={}):
-        val_predict = (np.asarray(self.model.predict(self.validation_data[:2])))
+        val_predict = None
+        preds = self.model.predict([self.validation_data[0], self.validation_data[1]])
+        for item in preds:
+            if len(item.shape) == 3:
+                val_predict = (np.asarray(item))
+                break
         val_predict = np.argmax(val_predict, axis=2)
-        val_targ = self.validation_data[2][:,:,0]
+        val_targ=None
+        for item in self.validation_data:
+            if len(item.shape)==3:
+                val_targ = item[:,:,0]
+                break
         val_predict_flat = val_predict.flatten()
         val_targ_flat = val_targ.flatten()
         val_mask = val_targ_flat != 0

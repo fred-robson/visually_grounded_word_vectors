@@ -14,6 +14,7 @@ from keras.layers import Masking
 from tensorflow.contrib.training import HParams
 import keras.backend as K
 from keras.utils import plot_model
+from keras import metrics as k_metrics
 
 def ranking_loss(y_true, y_pred):
 	loss = K.constant(0)
@@ -58,12 +59,13 @@ class Cap2(object):
 		inputs, outputs = self._build()
 		model = Model(inputs=inputs, outputs=outputs)
 		model.name = self.model_type
-		model.compile(loss=self.loss,optimizer=self.h_params.optimizer,metrics=['sparse_categorical_accuracy'])
+		model.compile(loss=self.loss,loss_weights=self.loss_weights,optimizer=self.h_params.optimizer,metrics=self.metrics)
 		return model
 
 class Cap2Cap(Cap2):
 	loss = {'decoder_output':'sparse_categorical_crossentropy'}
-	
+	metrics = ['sparse_categorical_accuracy']
+	loss_weights=None
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
 		model_type = 'cap2cap'
@@ -93,6 +95,8 @@ class Cap2Cap(Cap2):
 
 class Cap2Img(Cap2):
 	loss = {'projection_output': 'mean_squared_error'}
+	loss_weights=None
+	metrics = [k_metrics.mse]
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
 		self.model_type = 'cap2img'
@@ -113,6 +117,8 @@ class Cap2Img(Cap2):
 
 class Cap2All(Cap2Cap, Cap2Img):
 	loss = {**Cap2Cap.loss, **Cap2Img.loss}
+	metrics = {'decoder_output':'sparse_categorical_accuracy'}
+	loss_weights={'decoder_output':1., 'projection_output':0.5}
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
 		self.model_type = 'cap2all'
