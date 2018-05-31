@@ -183,7 +183,7 @@ class CaptionsSuper():
 				IDs.append(image_id)
 
 			
-		return np.array(IDs),np.array(X),np.array(Y1),np.array(Y2)
+		return IDs,np.array(X),np.array(Y1),np.array(Y2)
 
 	def cap2resnet(self):
 		if self.WV is None: raise "Call initialize_WV() first" 
@@ -194,21 +194,20 @@ class CaptionsSuper():
 			for c in captions:
 				x = self.WV.words_to_indices(c)
 				x = self.pad_sequences(x)
-				X.append(self.WV.words_to_indices(c))
+				X.append(x)
 				Y.append(self.get_resnet_output(image_id))
 				IDs.append(image_id)
 
-		return np.array(IDs),np.array(X),np.array(Y)
+		return IDs,np.array(X),np.array(Y)
 
 	def cap2all(self):
 
 		if self.WV is None: raise "Call initialize_WV() first"
 
-		IDs,X,Y1,Y2,Y3 = [],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
+		IDs,X,Y1,Y2,Y3 = [],[],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
 
 		for captions,image_id in self.get_all_captions():
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
-			resnet = self.get_resnet_output(image_id)
 			
 			for x,y in zip(X_batch,Y_batch):
 				X.append(self.pad_sequences(x))
@@ -217,7 +216,9 @@ class CaptionsSuper():
 				Y3.append(self.get_resnet_output(image_id))
 				IDs.append(image_id)
 
-		return  np.array(IDs),np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)
+		print(len(Y3))
+
+		return  IDs,np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)
 
 	def get_negative_samples(self,image_id_list,num_negative=5):
 
@@ -328,7 +329,6 @@ class CocoCaptions(CaptionsSuper):
 							   }
 
 
-
 		image_num = image_id[0]
 		data_source = image_id[1]
 		file_path = image_locations[data_source]
@@ -419,24 +419,30 @@ def test_CocoCaptions():
 
 	ret = Captions.get_negative_samples([('1355','tiny'), ('78','tiny')])
 	print(ret.shape)
-	quit()
 
 	IDs,X,Y1,Y2 = Captions.cap2cap()
-	for y1,y2 in zip(Y1,Y2):
-		print(Captions.WV.indices_to_words(y1,remove_padding=True))
-		print(Captions.WV.indices_to_words(y2,remove_padding=True))
+	print("Cap2Cap")
+	print("IDs Size",len(IDs))
+	print("X Size: ",X.shape)
+	print("Y1 Size: ",Y1.shape)
+	print("Y2 Size: ",Y2.shape)
 
 
 	IDs, X,Y = Captions.cap2resnet()
-	for x,y in zip(X,Y):
-		print(Captions.WV.indices_to_words(x,remove_padding=False))
-		print(y)
+	print("Cap2Resnet")
+	print("IDs Size",len(IDs))
+	print("X Size: ",X.shape)
+	print("Y Size: ",Y.shape)
+
 
 	IDs,X,Y1,Y2,Y3 = Captions.cap2all()
-	print(Y1)
-	for x,y in zip(X,Y1):
-		print(Captions.WV.indices_to_words(x,remove_padding=False))
-		print(Captions.WV.indices_to_words(y,remove_padding=False))
+	print("Cap2Allw")
+	print("IDs Size",len(IDs))
+	print("X Size: ",X.shape)
+	print("Y1 Size: ",Y1.shape)
+	print("Y2 Size: ",Y2.shape)
+	print("Y3 Size: ",Y3.shape)
+
 
 def test_FlickCaptions():
 	Flickr = FlickrCaptions(3)
