@@ -120,8 +120,8 @@ class HPSearcher(object):
                     cap2 = None
 
                     if self.model == 'cap2cap':
-                        X, Y1, Y2 = self.data_helper.cap2cap()
-                        X, Y1, Y2 = X[:20], Y1[:20], Y2[:20]
+                        _, X, Y1, Y2 = self.data_helper.cap2cap()
+                        _, X, Y1, Y2 = X[:20], Y1[:20], Y2[:20]
                         Y2 = np.expand_dims(Y2, axis=2)
                         validation_data=None
                         inputs = {'encoder_input': X, 'decoder_input': Y1}
@@ -136,7 +136,7 @@ class HPSearcher(object):
                         cap2 = Cap2Cap(hparams, embeddings=self.embedding_matrix)
 
                     if self.model == 'cap2img':
-                        X, Y = self.data_helper.cap2resnet()
+                        _, X, Y = self.data_helper.cap2resnet()
                         print(X.shape)
                         inputs = {'encoder_input': X}
                         outputs = {'resnet_output': Y}
@@ -150,7 +150,7 @@ class HPSearcher(object):
                         cap2 = Cap2Img(hparams, embeddings=self.embedding_matrix)
 
                     if self.model == 'cap2all':
-                        X, Y1, Y2, Y3 = self.data_helper.cap2all()
+                        _, X, Y1, Y2, Y3 = self.data_helper.cap2all()
                         inputs = {'encoder_input': X, 'decoder_input': Y1}
                         outputs = {'resnet_output': Y3, 'decoder_output': Y2}
                         hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
