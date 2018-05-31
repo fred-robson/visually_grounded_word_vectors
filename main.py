@@ -32,7 +32,7 @@ def hp_search(args):
     embedding_matrix = WV.get_embedding_matrix()
     metrics = Metrics()
 
-    hp_searcher = HPSearcher([0.0001], embedding_matrix, args.model, Captions)
+    hp_searcher = HPSearcher([0.0001], embedding_matrix, args.model, Captions, custom_metrics = [metrics])
     results = hp_searcher.run()
 
 
