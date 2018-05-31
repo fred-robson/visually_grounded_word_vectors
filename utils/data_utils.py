@@ -191,11 +191,12 @@ class CaptionsSuper():
 		IDs,X,Y = [],[],[]
 
 		for captions,image_id in self.get_all_captions():
+			resnet = self.get_resnet_output(image_id)
 			for c in captions:
 				x = self.WV.words_to_indices(c)
 				x = self.pad_sequences(x)
 				X.append(x)
-				Y.append(self.get_resnet_output(image_id))
+				Y.append(resnet)
 				IDs.append(image_id)
 
 		return IDs,np.array(X),np.array(Y)
@@ -208,12 +209,12 @@ class CaptionsSuper():
 
 		for captions,image_id in self.get_all_captions():
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
-			
+			resnet = self.get_resnet_output(image_id)
 			for x,y in zip(X_batch,Y_batch):
 				X.append(self.pad_sequences(x))
 				Y1.append(self.pad_sequences(y[:-1]))
 				Y2.append(self.pad_sequences(y[1:]))
-				Y3.append(self.get_resnet_output(image_id))
+				Y3.append(resnet)
 				IDs.append(image_id)
 
 		print(len(Y3))
