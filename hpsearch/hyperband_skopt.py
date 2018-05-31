@@ -111,7 +111,7 @@ class HPSearcher(object):
                 history = model.fit(X,
                                 Y,
                                 epochs=1,
-                                batch_size=128,
+                                batch_size=1024,
                                 validation_split=0.2,
                                 validation_data=validation_data,
                                 callbacks=[callback_log]+self.custom_metrics)
