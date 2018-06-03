@@ -175,7 +175,7 @@ class HPSearcher(object):
                     history = model.fit(inputs,
                                     outputs,
                                     epochs=10,
-                                    batch_size=1024,
+                                    batch_size=512,
                                     validation_split=0.2,
                                     validation_data=validation_data,
                                     callbacks=callbacks)
