@@ -172,6 +172,12 @@ class CaptionsSuper():
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
 
+		save_loc = "saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2cap.pkl"
+
+		if os.path.isfile(save_loc):
+			return pkl.load(open(save_loc,'rb')) 
+
+
 		IDs, X,Y1,Y2 = [],[],[],[]
 
 		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2cap"):
@@ -182,11 +188,19 @@ class CaptionsSuper():
 				Y2.append(self.pad_sequences(y[1:]))
 				IDs.append(image_id)
 
-			
+		pkl.dump((IDs,np.array(X),np.array(Y1),np.array(Y2)),open(save_loc,"wb+"))
 		return IDs,np.array(X),np.array(Y1),np.array(Y2)
 
 	def cap2resnet(self):
 		if self.WV is None: raise "Call initialize_WV() first" 
+
+
+		save_loc = "saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2resnet.pkl"
+
+		if os.path.isfile(save_loc):
+			return pkl.load(open(save_loc,'rb')) 
+
+
 
 		IDs,X,Y = [],[],[]
 
@@ -199,11 +213,18 @@ class CaptionsSuper():
 				Y.append(resnet)
 				IDs.append(image_id)
 
+		pkl.dump((IDs,np.array(X),np.array(Y)),open(save_loc,"wb+"))
+
 		return IDs,np.array(X),np.array(Y)
 
 	def cap2all(self):
 
 		if self.WV is None: raise "Call initialize_WV() first"
+
+		save_loc = "saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2all.pkl"
+
+		if os.path.isfile(save_loc):
+			return pkl.load(open(save_loc,'rb')) 
 
 		IDs,X,Y1,Y2,Y3 = [],[],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
 
@@ -217,7 +238,8 @@ class CaptionsSuper():
 				Y3.append(resnet)
 				IDs.append(image_id)
 
-		print(len(Y3))
+
+		pkl.dump((IDs,np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)),open(save_loc,"wb+"))
 
 		return  IDs,np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)
 
