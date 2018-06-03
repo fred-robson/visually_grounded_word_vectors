@@ -3,6 +3,7 @@ import tensorflow as tf
 import random as rn
 import keras 
 import os
+os.environ['KERAS_BACKEND'] = 'theano'
 import argparse
 from keras.callbacks import TensorBoard
 from utils.data_utils import CocoCaptions
