@@ -14,4 +14,4 @@ with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     print (sess.run(c_c))
     print (sess.run(c_g))
 
-print 'DONE!'
+print('DONE!')
