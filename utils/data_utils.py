@@ -172,7 +172,7 @@ class CaptionsSuper():
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
 
-		save_loc = "saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2cap.pkl"
+		save_loc = base_fp+"saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2cap.pkl"
 
 		if os.path.isfile(save_loc):
 			return pkl.load(open(save_loc,'rb')) 
@@ -195,7 +195,7 @@ class CaptionsSuper():
 		if self.WV is None: raise "Call initialize_WV() first" 
 
 
-		save_loc = "saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2resnet.pkl"
+		save_loc = base_fp+"saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2resnet.pkl"
 
 		if os.path.isfile(save_loc):
 			return pkl.load(open(save_loc,'rb')) 
@@ -221,7 +221,7 @@ class CaptionsSuper():
 
 		if self.WV is None: raise "Call initialize_WV() first"
 
-		save_loc = "saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2all.pkl"
+		save_loc = base_fp+"saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2all.pkl"
 
 		if os.path.isfile(save_loc):
 			return pkl.load(open(save_loc,'rb')) 
