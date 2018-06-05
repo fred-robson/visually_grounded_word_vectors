@@ -172,9 +172,15 @@ class CaptionsSuper():
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
 
+		save_loc = base_fp+"saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2cap.pkl"
+
+		#if os.path.isfile(save_loc):
+		#	return pkl.load(open(save_loc,'rb')) 
+
+
 		IDs, X,Y1,Y2 = [],[],[],[]
 
-		for captions,image_id in self.get_all_captions():
+		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2cap"):
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
 			for x,y in zip(X_batch,Y_batch):
 				X.append(self.pad_sequences(x))
@@ -182,21 +188,32 @@ class CaptionsSuper():
 				Y2.append(self.pad_sequences(y[1:]))
 				IDs.append(image_id)
 
-			
+		#pkl.dump((IDs,np.array(X),np.array(Y1),np.array(Y2)),open(save_loc,"wb+"))
 		return IDs,np.array(X),np.array(Y1),np.array(Y2)
 
 	def cap2resnet(self):
 		if self.WV is None: raise "Call initialize_WV() first" 
 
+
+		save_loc = base_fp+"saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2resnet.pkl"
+
+		#if os.path.isfile(save_loc):
+		#	return pkl.load(open(save_loc,'rb')) 
+
+
+
 		IDs,X,Y = [],[],[]
 
-		for captions,image_id in self.get_all_captions():
+		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2resnet"):
+			resnet = self.get_resnet_output(image_id)
 			for c in captions:
 				x = self.WV.words_to_indices(c)
 				x = self.pad_sequences(x)
 				X.append(x)
-				Y.append(self.get_resnet_output(image_id))
+				Y.append(resnet)
 				IDs.append(image_id)
+
+		#pkl.dump((IDs,np.array(X),np.array(Y)),open(save_loc,"wb+"))
 
 		return IDs,np.array(X),np.array(Y)
 
@@ -204,19 +221,25 @@ class CaptionsSuper():
 
 		if self.WV is None: raise "Call initialize_WV() first"
 
+		save_loc = base_fp+"saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2all.pkl"
+
+		#if os.path.isfile(save_loc):
+		#	return pkl.load(open(save_loc,'rb')) 
+
 		IDs,X,Y1,Y2,Y3 = [],[],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
 
-		for captions,image_id in self.get_all_captions():
+		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2all"):
 			X_batch, Y_batch = self.get_caption_convolutions(captions)
-			
+			resnet = self.get_resnet_output(image_id)
 			for x,y in zip(X_batch,Y_batch):
 				X.append(self.pad_sequences(x))
 				Y1.append(self.pad_sequences(y[:-1]))
 				Y2.append(self.pad_sequences(y[1:]))
-				Y3.append(self.get_resnet_output(image_id))
+				Y3.append(resnet)
 				IDs.append(image_id)
 
-		print(len(Y3))
+
+		#pkl.dump((IDs,np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)),open(save_loc,"wb+"))
 
 		return  IDs,np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)
 

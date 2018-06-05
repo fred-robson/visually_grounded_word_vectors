@@ -3,6 +3,7 @@ import tensorflow as tf
 import random as rn
 import keras 
 import os
+os.environ['KERAS_BACKEND'] = 'tensorflow'
 import argparse
 from keras.callbacks import TensorBoard
 from utils.data_utils import CocoCaptions
@@ -34,7 +35,7 @@ def log_dir_name(learning_rate, model, run_type, dataset):
 
 def hp_search(args):
 
-    from hpsearch.hyperband_skopt import HPSearcher
+    from hyperband_skopt import HPSearcher
 
     Captions = CocoCaptions(args.data)
     WV = FilteredGloveVectors()
