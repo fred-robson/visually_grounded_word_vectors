@@ -37,7 +37,7 @@ def hp_search(args):
 
     from hyperband_skopt import HPSearcher
 
-    Captions = CocoCaptions(args.data)
+    Captions = CocoCaptions(args.data,args.max_samples)
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
 
@@ -79,7 +79,7 @@ def main(args):
     sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
     K.set_session(sess)
 
-    Captions = CocoCaptions(args.data)
+    Captions = CocoCaptions(args.data,args.max_samples)
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
 
@@ -140,8 +140,6 @@ def main(args):
 
             if self.model == 'cap2cap':
                 datagen = Captions.cap2cap()
-                if self.max_samples is not None:
-                    X, Y1, Y2, = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples]
                 Y2 = np.expand_dims(Y2, axis=2)
                 validation_data=None
                 inputs = {'encoder_input': X, 'decoder_input': Y1}
@@ -175,8 +173,6 @@ def main(args):
                 X, Y1, Y2, Y3 = X[:20], Y1[:20], Y2[:20], Y3[:20]
                 Y2 = np.expand_dims(Y2, axis=2)
                 Y3 = Y3[:,0,:]
-                if self.max_samples is not None:
-                    X, Y1, Y2, Y3 = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples], Y3[:self.max_samples]
                 inputs = {'encoder_input': X, 'decoder_input': Y1}
                 outputs = {'projection_output': Y3, 'decoder_output': Y2}
                 hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
@@ -202,7 +198,7 @@ def main(args):
             #                 validation_data=validation_data,
             #                 callbacks=callbacks)
             history = model.fit_generator(datagen,
-                                    epochs=10,
+                                    epochs=3,
                                     validation_data=valgen,
                                     callbacks=callbacks,
                                     )
