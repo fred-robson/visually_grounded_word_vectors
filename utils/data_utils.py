@@ -13,7 +13,7 @@ import numpy as np
 from word_vec_utils import GloVeVectors,CaptionGloveVectors,pad,unk
 from keras.preprocessing.sequence import pad_sequences
 from data_generator import DataGenerator
-
+import copy, random
 
 class CaptionsSuper():
 
@@ -28,6 +28,21 @@ class CaptionsSuper():
 
 		self.WV = None
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
+
+	def split_train_val(self,percent_train=0.7):
+		train = copy.deepcopy(self)
+		train_data = {}
+		val = copy.deepcopy(self)
+		val_data = {}
+		for k,v in self.data.items():
+			if random.random()<percent_train:
+				train_data[k] = v
+			else: 
+				val_data[k] = v
+		train.data = train_data
+		val.data = val_data
+		return train,val
+
 
 
 	#########################################
@@ -441,10 +456,17 @@ class FlickrCaptions(CaptionsSuper):
 
 def test_CocoCaptions():
 
-	Captions = CocoCaptions(3,500)
+	Captions = CocoCaptions(3,50)
+	print(len(Captions.get_all_image_ids()))
 
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
+
+	train,val = Captions.split_train_val()
+	print(len(train.get_all_image_ids()))
+	print(len(val.get_all_image_ids()))
+	quit()
+	Captions = train
 
 	ret = Captions.get_negative_samples([('1355','tiny'), ('78','tiny')])
 	print(ret.shape)
