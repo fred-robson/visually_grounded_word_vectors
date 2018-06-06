@@ -30,6 +30,7 @@ class Cap2(object):
 		self.embedding_matrix = embeddings
 		self.model_type = None
 		self.graph_path = graph_path
+		self.model = None
 
 	def visualize(self):
 		path = self.graph_path.format(self.model_type)
@@ -55,12 +56,15 @@ class Cap2(object):
 	def _build(self):
 		return None, None
 
+	def load_model(self, path):
+		self.model = keras.models.load_model(path)
+
 	def compile(self):
 		inputs, outputs = self._build()
 		model = Model(inputs=inputs, outputs=outputs)
 		model.name = self.model_type
 		model.compile(loss=self.loss,loss_weights=self.loss_weights,optimizer=self.h_params.optimizer,metrics=self.metrics)
-		return model
+		self.model = model
 
 class Cap2Cap(Cap2):
 	loss = {'decoder_output':'sparse_categorical_crossentropy'}
@@ -69,7 +73,6 @@ class Cap2Cap(Cap2):
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
 		model_type = 'cap2cap'
-		self.model = self.compile()
 
 	def _decoder(self, initial_state):
 		decoder_input = Input(shape=(self.h_params.max_seq_length,),dtype='int32', name='decoder_input')
@@ -100,7 +103,6 @@ class Cap2Img(Cap2):
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
 		self.model_type = 'cap2img'
-		self.model = self.compile()
 
 	def _projection(self, x):
 		projection_output = Dense(self.h_params.latent_dim,activation=self.h_params.activation, name='projection_output')(x)
@@ -117,13 +119,12 @@ class Cap2Img(Cap2):
 
 class Cap2All(Cap2Cap, Cap2Img):
 	loss = {**Cap2Cap.loss, **Cap2Img.loss}
-	metrics = {'decoder_output':'sparse_categorical_accuracy'}
+	metrics = {'decoder_outputf':'sparse_categorical_accuracy'}
 	loss_weights={'decoder_output':1., 'projection_output':0.5}
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
 		self.model_type = 'cap2all'
 		#print(self.loss)
-		self.model = self.compile()
 
 	def _build(self):
 		encoder_input, encoder_output, encoder_out_cell = self._encoder()
@@ -143,5 +144,6 @@ if __name__ == '__main__':
 						activation='relu',
 						latent_dim=1000)
 	cap2 = Cap2All(hparams, embeddings=embedding_matrix)
+	cap2.load_model('models/saved/cap2all_best_model.keras')
 	cap2.visualize()
 

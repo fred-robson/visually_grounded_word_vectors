@@ -42,7 +42,7 @@ def _log_dir_name(learning_rate, model):
 
 class HPSearcher(object):
 
-    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, custom_metrics=[], max_samples=None):
+    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], max_samples=None):
         self.default_parameters = default_parameters
         self.embedding_matrix = embedding_matrix
         self.model = model
@@ -52,6 +52,7 @@ class HPSearcher(object):
             path_best_model = './models/saved/'+model+'_best_model.keras'
         self.custom_metrics = custom_metrics
         self.path_best_model = path_best_model
+        self.path_load_model = path_load_model
         self.max_samples = max_samples
 
 
@@ -97,7 +98,8 @@ class HPSearcher(object):
             history = None
             validation_data=None
             # Create the neural network with these hyper-parameters.
-
+            #K.clear_session()
+            tf.reset_default_graph()
             if self.model == 'toy':
 
                 X = np.random.randint(0, 6, size=(3000,50))
@@ -155,6 +157,7 @@ class HPSearcher(object):
 
                     if self.model == 'cap2all':
                         _, X, Y1, Y2, Y3 = self.data_helper.cap2all()
+                        #X, Y1, Y2, Y3 = X[:20], Y1[:20], Y2[:20], Y3[:20]
                         Y2 = np.expand_dims(Y2, axis=2)
                         Y3 = Y3[:,0,:]
                         if self.max_samples is not None:
@@ -170,12 +173,20 @@ class HPSearcher(object):
                                 latent_dim=1000)
                         cap2 = Cap2All(hparams, embeddings=self.embedding_matrix)
                         callbacks += self.custom_metrics
-
+                    if self.path_load_model is not None:
+                        print("Loading model "+self.path_load_model+" ...")
+                        cap2.load_model(self.path_load_model)
+                    
+                    cap2.compile()
                     model = cap2.model
                     history = model.fit(inputs,
                                     outputs,
                                     epochs=3,
+<<<<<<< HEAD
+                                    batch_size=128,
+=======
                                     batch_size=256,
+>>>>>>> cfe1b11529f85b9b3f67509b2c2b572705538067
                                     validation_split=0.2,
                                     validation_data=validation_data,
                                     callbacks=callbacks)
@@ -203,6 +214,7 @@ class HPSearcher(object):
             # If the classification accuracy of the saved model is improved ...
             print(self.best_f1)
             if f1 > self.best_f1:
+                print("saving model at {0}".format(self.path_best_model))
                 # Save the new model to harddisk.
                 model.save(self.path_best_model)
                 # Update the classification accuracy.
