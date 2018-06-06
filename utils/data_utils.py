@@ -17,8 +17,15 @@ from data_generator import DataGenerator
 
 class CaptionsSuper():
 
-	def __init__(self,data):
+	def __init__(self,data,limit=None):
 		self.data = data 
+		if not limit is None:
+			data = {}
+			for i,(k,v) in enumerate(self.data.items()):
+				if i == limit: break
+				data[k] = v
+			self.data = data
+
 		self.WV = None
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
 
@@ -260,7 +267,7 @@ class CaptionsSuper():
 
 class CocoCaptions(CaptionsSuper):
 
-	def __init__(self,data_type=3):
+	def __init__(self,data_type=3,limit=None):
 		'''
 		Data lets you know where to pull the captions from.
 			0 = train
@@ -269,7 +276,7 @@ class CocoCaptions(CaptionsSuper):
 			3 = tiny (Note that tiny is a subset of train)
 		'''
 		data = self.create_data(data_type) #{(image_id,source):[caption1,caption2,....]}
-		CaptionsSuper.__init__(self,data)
+		CaptionsSuper.__init__(self,data,limit)
 
 
 	##########
@@ -361,7 +368,7 @@ class CocoCaptions(CaptionsSuper):
 
 class FlickrCaptions(CaptionsSuper):
 	
-	def __init__(self,data_type=1):
+	def __init__(self,data_type=1,limit=None):
 		'''
 		Data lets you know where to pull the captions from.
 			0 = train
@@ -371,7 +378,7 @@ class FlickrCaptions(CaptionsSuper):
 
 		'''
 		data = self.create_data(data_type) #{(image_id,source):[caption1,caption2,....]}
-		CaptionsSuper.__init__(self,data)
+		CaptionsSuper.__init__(self,data,limit)
 
 
 	##########
@@ -434,7 +441,7 @@ class FlickrCaptions(CaptionsSuper):
 
 def test_CocoCaptions():
 
-	Captions = CocoCaptions(3)
+	Captions = CocoCaptions(3,500)
 
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
