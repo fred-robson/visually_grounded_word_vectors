@@ -145,7 +145,7 @@ class Cap2Img(Cap2):
 
 class Cap2All(Cap2Cap, Cap2Img):
 	loss = {**Cap2Cap.loss, **Cap2Img.loss}
-	metrics = {'decoder_outputf':'sparse_categorical_accuracy'}
+	metrics = {'decoder_output':'sparse_categorical_accuracy'}
 	loss_weights={'decoder_output':1., 'projection_output':0.5}
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
@@ -162,7 +162,7 @@ class Cap2All(Cap2Cap, Cap2Img):
 
 class Vae2All(Cap2Cap, Cap2Img):
 	loss = {**Cap2Cap.loss, **Cap2Img.loss}
-	metrics = {'decoder_outputf':'sparse_categorical_accuracy'}
+	metrics = {'decoder_output':'sparse_categorical_accuracy'}
 	loss_weights={'decoder_output':1., 'projection_output':0.5}
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
@@ -173,7 +173,7 @@ class Vae2All(Cap2Cap, Cap2Img):
 		z_mu = Dense(self.h_params.hidden_dim)(x)
 		z_log_var = Dense(self.h_params.hidden_dim)(x)
 
-		z_mu, z_log_var = KLDivergenceLayer()([z_mu, z_log_var])
+		z_mu, z_log_var = KLDivergenceLayer(name='KL_divergence')([z_mu, z_log_var])
 		z_sigma = Lambda(lambda t: K.exp(.5*t))(z_log_var)
 		eps = Input(tensor=K.random_normal(shape=(K.shape(x)[0],
 		                                          self.h_params.hidden_dim)))
@@ -189,6 +189,16 @@ class Vae2All(Cap2Cap, Cap2Img):
 		inputs = [encoder_input, decoder_input, eps]
 		outputs = [projection_output, decoder_output]
 		return inputs, outputs
+
+
+def get_model(name):
+	model_dict = {'cap2cap':Cap2Cap, 'cap2img':Cap2Img, 'cap2all':Cap2All, 'vae2all':Vae2All}
+	try:
+		model = model_dict[name]
+	except:
+		print("the model \'"+name+"\' doesn't exist")
+		model = None
+	return model
 
 if __name__ == '__main__':
 	embedding_matrix = np.random.randn(10000,50)

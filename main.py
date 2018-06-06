@@ -41,13 +41,21 @@ def hp_search(args):
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
 
-    ValCaptions = CocoCaptions(3)
+    ValCaptions = CocoCaptions(3, args.max_samples)
     ValCaptions.initialize_WV(WV)
 
     embedding_matrix = WV.get_embedding_matrix()
     metrics = Metrics()
 
-    hp_searcher = HPSearcher([0.0001], embedding_matrix, args.model, Captions, custom_metrics = [metrics], max_samples=args.max_samples, path_load_model=args.load, val_helper=ValCaptions)
+    hp_searcher = HPSearcher([0.0001], 
+                            embedding_matrix, 
+                            args.model, 
+                            Captions, 
+                            custom_metrics = [metrics], 
+                            max_samples=args.max_samples, 
+                            path_load_model=args.load, 
+                            val_helper=ValCaptions,
+                            epochs=args.epochs)
     results = hp_searcher.run()
 
 
@@ -250,6 +258,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_samples', help='maximum number of data samples to train on', type=int, default=None)
     parser.add_argument('--load', help='load saved model')
     parser.add_argument('--path', help='save path', default='')
+    parser.add_argument('--epochs', help='number of epochs', type=int, default=1)
 
     args = parser.parse_args()
 
