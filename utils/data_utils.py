@@ -456,7 +456,7 @@ class FlickrCaptions(CaptionsSuper):
 
 def test_CocoCaptions():
 
-	Captions = CocoCaptions(0)
+	Captions = CocoCaptions(3)
 	print(len(Captions.get_all_image_ids()))
 
 	WV = CaptionGloveVectors()
@@ -464,47 +464,43 @@ def test_CocoCaptions():
 	print("Caption: Combined",Captions.max_caption_len)
 
 	train,val = Captions.split_train_val()
-	print(len(train.get_all_image_ids()))
-	print(len(val.get_all_image_ids()))
 	print("Caption: Train",train.max_caption_len)
 	print("Caption: Val",val.max_caption_len)
-	print(type(train))
-	print(type(Captions))
-	quit()
-	Captions = train
+	
+	for Captions in [train,val]:
 
-	ret = Captions.get_negative_samples([('1355','tiny'), ('78','tiny')])
-	print(ret.shape)
+		ret = Captions.get_negative_samples([('1355','tiny'), ('78','tiny')])
+		print(ret.shape)
 
-	for i,(X,Y) in tqdm(enumerate(Captions.cap2cap())):
-		if i == 0: 
-			print(X)
-			print(Y)
-		if i == 6: break
+		for i,(X,Y) in tqdm(enumerate(Captions.cap2cap())):
+			if i == 0: 
+				for x in X.values(): print(x.shape)
+				for y in Y.values(): print(y.shape)
+			if i == 6: break
 
-	print("**************")
-	print("loaded cap2cap")
-	print("**************")
+		print("**************")
+		print("loaded cap2cap")
+		print("**************")
 
-	for i,(X,Y) in tqdm(enumerate(Captions.cap2resnet())):
-		if i == 0: 
-			print(X)
-			print(Y)
-		if i == 6: break
+		for i,(X,Y) in tqdm(enumerate(Captions.cap2resnet())):
+			if i == 0: 
+				for x in X.values(): print(x.shape)
+				for y in Y.values(): print(y.shape)
+			if i == 6: break
 
-	print("*****************")
-	print("loaded cap2resnet")
-	print("*****************")
+		print("*****************")
+		print("loaded cap2resnet")
+		print("*****************")
 
-	for i,(X,Y) in tqdm(enumerate(Captions.cap2all())):
-		if i == 0: 
-			print(X)
-			print(Y)
-		if i == 6: break
+		for i,(X,Y) in tqdm(enumerate(Captions.cap2all())):
+			if i == 0: 
+				for x in X.values(): print(x.shape)
+				for y in Y.values(): print(y.shape)
+			if i == 6: break
 
-	print("*****************")
-	print("loaded cap2all")
-	print("*****************")
+		print("*****************")
+		print("loaded cap2all")
+		print("*****************")
 
 
 def test_FlickCaptions():

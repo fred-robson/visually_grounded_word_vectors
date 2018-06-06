@@ -41,8 +41,7 @@ def hp_search(args):
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
 
-    ValCaptions = CocoCaptions(3)
-    ValCaptions.initialize_WV(WV)
+    Captions,ValCaptions = Captions.split_train_val()
 
     embedding_matrix = WV.get_embedding_matrix()
     metrics = Metrics()
