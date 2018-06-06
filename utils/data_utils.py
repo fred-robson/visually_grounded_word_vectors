@@ -12,6 +12,7 @@ import pickle as pkl
 import numpy as np
 from word_vec_utils import GloVeVectors,CaptionGloveVectors,pad,unk
 from keras.preprocessing.sequence import pad_sequences
+from data_generator import DataGenerator
 
 
 class CaptionsSuper():
@@ -45,18 +46,17 @@ class CaptionsSuper():
 			vocab.add(v)
 		return vocab
 
+	def get_all_image_ids(self):
+		return list(self.data.keys())
+
 	def get_captions(self,image_id):
 		#Image id is of the form (id,source) eg (1423,"val")
 		return self.data[image_id]
 
 	def get_all_captions(self):
 		keys = list(self.data.keys())
-		i = 0
-		len_keys = len(keys)
-		while i < len_keys:
-			k = keys[i]
-			yield self.get_captions(k),k
-			i+=1
+		ret = [(self.get_captions(k),k) for k in keys]
+		return ret
 
 	def build_corpus(self):
 		'''
@@ -163,85 +163,78 @@ class CaptionsSuper():
 		captions = [cap[0] for cap in caps]
 		return captions
 
+	def get_cap2cap_batch(self,list_image_ids):
+		#yield({“encoder_input:” X, “decoder_input”: Y1}, {“decoder_output”:Y2})
+		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
+		for image_id in list_image_ids:
+			captions = self.get_captions(image_id)
+			X_group, Y_group = self.get_caption_convolutions(captions)
+			for x,y in zip(X_group,Y_group):
+				batch_x["encoder_input"].append(self.pad_sequences(x))
+				batch_x["decoder_input"].append(self.pad_sequences(y[:-1]))
+				batch_y["decoder_output"].append(self.pad_sequences(y[1:]))
+				#IDs.append(image_id) TO DO LATER
+		for k,v in batch_x.items(): batch_x[k] = np.array(v)
+		for k,v in batch_y.items(): batch_y[k] = np.array(v)
+		return dict(batch_x),dict(batch_y)
 
-	def cap2cap(self):
+
+	def cap2cap(self,batch_size=32):
 		'''
 		Returns X,Y where each x_i is a list of indices of a caption
 		and each y_i is a list of indices of a different caption 
 		corresponding to the same image
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
+		list_image_ids = self.get_all_image_ids()
+		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2cap_batch(x))
+		return DG 
 
-		save_loc = base_fp+"saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2cap.pkl"
-
-		#if os.path.isfile(save_loc):
-		#	return pkl.load(open(save_loc,'rb')) 
-
-
-		IDs, X,Y1,Y2 = [],[],[],[]
-
-		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2cap"):
-			X_batch, Y_batch = self.get_caption_convolutions(captions)
-			for x,y in zip(X_batch,Y_batch):
-				X.append(self.pad_sequences(x))
-				Y1.append(self.pad_sequences(y[:-1]))
-				Y2.append(self.pad_sequences(y[1:]))
-				IDs.append(image_id)
-
-		#pkl.dump((IDs,np.array(X),np.array(Y1),np.array(Y2)),open(save_loc,"wb+"))
-		return IDs,np.array(X),np.array(Y1),np.array(Y2)
-
-	def cap2resnet(self):
-		if self.WV is None: raise "Call initialize_WV() first" 
-
-
-		save_loc = base_fp+"saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2resnet.pkl"
-
-		#if os.path.isfile(save_loc):
-		#	return pkl.load(open(save_loc,'rb')) 
-
-
-
-		IDs,X,Y = [],[],[]
-
-		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2resnet"):
+	def get_cap2resnet_batch(self,list_image_ids):
+		#yield({“encoder_input:” X}, {“projection_output”:Y})
+		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
+		for image_id in list_image_ids:
 			resnet = self.get_resnet_output(image_id)
+			captions = self.get_captions(image_id)
 			for c in captions:
 				x = self.WV.words_to_indices(c)
 				x = self.pad_sequences(x)
-				X.append(x)
-				Y.append(resnet)
-				IDs.append(image_id)
+				batch_x["encoder_input"].append(x)
+				batch_y["projection_output"].append(resnet)
+		for k,v in batch_x.items(): batch_x[k] = np.array(v)
+		for k,v in batch_y.items(): batch_y[k] = np.array(v)
+		return dict(batch_x),dict(batch_y)
 
-		#pkl.dump((IDs,np.array(X),np.array(Y)),open(save_loc,"wb+"))
 
-		return IDs,np.array(X),np.array(Y)
+	def cap2resnet(self,batch_size=32):
+		if self.WV is None: raise "Call initialize_WV() first" 
+		list_image_ids = self.get_all_image_ids()
+		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x))
+		return DG 
 
-	def cap2all(self):
-
-		if self.WV is None: raise "Call initialize_WV() first"
-
-		save_loc = base_fp+"saved_items/"+type(self).__name__+"_"+type(self.WV).__name__+str(self.WV.dimensions)+"_cap2all.pkl"
-
-		#if os.path.isfile(save_loc):
-		#	return pkl.load(open(save_loc,'rb')) 
-
-		IDs,X,Y1,Y2,Y3 = [],[],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
-
-		for captions,image_id in tqdm(self.get_all_captions(),desc="Loading cap2all"):
-			X_batch, Y_batch = self.get_caption_convolutions(captions)
+	def get_cap2all_batch(self,list_image_ids):
+		#yield({“encoder_input:” X, “decoder_input”: Y1}, {“decoder_output”:Y2, “projection_output”:Y3})
+		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
+		for image_id in list_image_ids:
+			captions = self.get_captions(image_id)
 			resnet = self.get_resnet_output(image_id)
-			for x,y in zip(X_batch,Y_batch):
-				X.append(self.pad_sequences(x))
-				Y1.append(self.pad_sequences(y[:-1]))
-				Y2.append(self.pad_sequences(y[1:]))
-				Y3.append(resnet)
-				IDs.append(image_id)
+			X_group, Y_group = self.get_caption_convolutions(captions)
+			for x,y in zip(X_group,Y_group):
+				batch_x["encoder_input"].append(self.pad_sequences(x))
+				batch_x["decoder_input"].append(self.pad_sequences(y[:-1]))
+				batch_y["decoder_output"].append(self.pad_sequences(y[1:]))
+				batch_y["projection_output"].append(resnet)
+		for k,v in batch_x.items(): batch_x[k] = np.array(v)
+		for k,v in batch_y.items(): batch_y[k] = np.array(v)
+		return dict(batch_x),dict(batch_y)
 
+	def cap2all(self,batch_size=32):
+		if self.WV is None: raise "Call initialize_WV() first"
+		list_image_ids = self.get_all_image_ids()
+		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x))
+		return DG 
 
-		#pkl.dump((IDs,np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)),open(save_loc,"wb+"))
-
-		return  IDs,np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)
+	
 
 	def get_negative_samples(self,image_id_list,num_negative=5):
 
@@ -443,28 +436,35 @@ def test_CocoCaptions():
 	ret = Captions.get_negative_samples([('1355','tiny'), ('78','tiny')])
 	print(ret.shape)
 
-	IDs,X,Y1,Y2 = Captions.cap2cap()
-	print("Cap2Cap")
-	print("IDs Size",len(IDs))
-	print("X Size: ",X.shape)
-	print("Y1 Size: ",Y1.shape)
-	print("Y2 Size: ",Y2.shape)
+	for i,(X,Y) in tqdm(enumerate(Captions.cap2cap())):
+		if i == 0: 
+			print(X)
+			print(Y)
+		if i == 6: break
 
+	print("**************")
+	print("loaded cap2cap")
+	print("**************")
 
-	IDs, X,Y = Captions.cap2resnet()
-	print("Cap2Resnet")
-	print("IDs Size",len(IDs))
-	print("X Size: ",X.shape)
-	print("Y Size: ",Y.shape)
+	for i,(X,Y) in tqdm(enumerate(Captions.cap2resnet())):
+		if i == 0: 
+			print(X)
+			print(Y)
+		if i == 6: break
 
+	print("*****************")
+	print("loaded cap2resnet")
+	print("*****************")
 
-	IDs,X,Y1,Y2,Y3 = Captions.cap2all()
-	print("Cap2Allw")
-	print("IDs Size",len(IDs))
-	print("X Size: ",X.shape)
-	print("Y1 Size: ",Y1.shape)
-	print("Y2 Size: ",Y2.shape)
-	print("Y3 Size: ",Y3.shape)
+	for i,(X,Y) in tqdm(enumerate(Captions.cap2all())):
+		if i == 0: 
+			print(X)
+			print(Y)
+		if i == 6: break
+
+	print("*****************")
+	print("loaded cap2all")
+	print("*****************")
 
 
 def test_FlickCaptions():
@@ -478,5 +478,6 @@ def test_FlickCaptions():
 if __name__ == "__main__":
 	#test_FlickCaptions()
 	test_CocoCaptions()
+	
 	
 
