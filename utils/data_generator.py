@@ -1,5 +1,6 @@
 import keras
 import numpy as np
+import keras
 
 #See here for more information 
 #https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly.html
