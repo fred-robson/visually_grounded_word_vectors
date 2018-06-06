@@ -456,7 +456,7 @@ class FlickrCaptions(CaptionsSuper):
 
 def test_CocoCaptions():
 
-	Captions = CocoCaptions(0,50)
+	Captions = CocoCaptions(0)
 	print(len(Captions.get_all_image_ids()))
 
 	WV = CaptionGloveVectors()
