@@ -172,7 +172,9 @@ class CaptionsSuper():
 			for x,y in zip(X_group,Y_group):
 				batch_x["encoder_input"].append(self.pad_sequences(x))
 				batch_x["decoder_input"].append(self.pad_sequences(y[:-1]))
-				batch_y["decoder_output"].append(self.pad_sequences(y[1:]))
+				Y2 = self.pad_sequences(y[1:])
+				Y2 = np.expand_dims(Y2, axis=2)
+				batch_y["decoder_output"].append(Y2)
 				#IDs.append(image_id) TO DO LATER
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
@@ -200,7 +202,7 @@ class CaptionsSuper():
 				x = self.WV.words_to_indices(c)
 				x = self.pad_sequences(x)
 				batch_x["encoder_input"].append(x)
-				batch_y["projection_output"].append(resnet)
+				batch_y["projection_output"].append(resnet[:,0,:])
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
 		return dict(batch_x),dict(batch_y)
@@ -222,7 +224,9 @@ class CaptionsSuper():
 			for x,y in zip(X_group,Y_group):
 				batch_x["encoder_input"].append(self.pad_sequences(x))
 				batch_x["decoder_input"].append(self.pad_sequences(y[:-1]))
-				batch_y["decoder_output"].append(self.pad_sequences(y[1:]))
+				Y2 = self.pad_sequences(y[1:])
+				Y2 = np.expand_dims(Y2, axis=2)
+				batch_y["decoder_output"].append(Y2[:,0,:])
 				batch_y["projection_output"].append(resnet)
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
