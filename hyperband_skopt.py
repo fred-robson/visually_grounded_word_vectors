@@ -42,11 +42,12 @@ def _log_dir_name(learning_rate, model):
 
 class HPSearcher(object):
 
-    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], max_samples=None):
+    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], max_samples=None, val_helper=None):
         self.default_parameters = default_parameters
         self.embedding_matrix = embedding_matrix
         self.model = model
         self.data_helper = data_helper
+        self.val_helper = val_helper
         self.best_f1 = 0.0
         if path_best_model is None:
             path_best_model = './models/saved/'+model+'_best_model.keras'
@@ -119,59 +120,54 @@ class HPSearcher(object):
             else:
                 if self.model[:4] == "cap2":
                     inputs, outputs = None, None
+                    datagen, valgen = None, None
                     cap2 = None
                     callbacks = [callback_log]
 
-                    if self.model == 'cap2cap':
-                        _, X, Y1, Y2 = self.data_helper.cap2cap()
-                        if self.max_samples is not None:
-                            X, Y1, Y2, = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples]
-                        Y2 = np.expand_dims(Y2, axis=2)
-                        validation_data=None
-                        inputs = {'encoder_input': X, 'decoder_input': Y1}
-                        outputs = {'decoder_output': Y2}
-                        hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
+                    hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
                                 optimizer='adam', dropout= 0.5, 
-                                max_seq_length=inputs['encoder_input'].shape[1],
+                                max_seq_length=data_helper.max_caption_len,
                                 embed_dim=self.embedding_matrix.shape[-1],
                                 num_embeddings=self.embedding_matrix.shape[0],
                                 activation='relu',
                                 latent_dim=1000)
+
+                    if self.model == 'cap2cap':
+                        # _, X, Y1, Y2 = self.data_helper.cap2cap()
+                        # if self.max_samples is not None:
+                        #     X, Y1, Y2, = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples]
+                        # Y2 = np.expand_dims(Y2, axis=2)
+                        # validation_data=None
+                        # inputs = {'encoder_input': X, 'decoder_input': Y1}
+                        # outputs = {'decoder_output': Y2}
+                        datagen = self.data_helper.cap2cap()
+                        valgen = self.val_helper.cap2cap()
                         cap2 = Cap2Cap(hparams, embeddings=self.embedding_matrix)
                         callbacks += self.custom_metrics
 
                     if self.model == 'cap2img':
-                        _, X, Y = self.data_helper.cap2resnet()
-                        Y = Y[:,0,:]
-                        inputs = {'encoder_input': X}
-                        outputs = {'projection_output': Y}
-                        hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
-                                optimizer='adam', dropout= 0.5, 
-                                max_seq_length=inputs['encoder_input'].shape[1],
-                                embed_dim=self.embedding_matrix.shape[-1],
-                                num_embeddings=self.embedding_matrix.shape[0],
-                                activation='relu',
-                                latent_dim=1000)
+                        # _, X, Y = self.data_helper.cap2resnet()
+                        # Y = Y[:,0,:]
+                        # inputs = {'encoder_input': X}
+                        # outputs = {'projection_output': Y}
+                        datagen = self.data_helper.cap2resnet()
+                        valgen = self.val_helper.cap2resnet()
                         cap2 = Cap2Img(hparams, embeddings=self.embedding_matrix)
 
                     if self.model == 'cap2all':
-                        _, X, Y1, Y2, Y3 = self.data_helper.cap2all()
-                        #X, Y1, Y2, Y3 = X[:20], Y1[:20], Y2[:20], Y3[:20]
-                        Y2 = np.expand_dims(Y2, axis=2)
-                        Y3 = Y3[:,0,:]
-                        if self.max_samples is not None:
-                            X, Y1, Y2, Y3 = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples], Y3[:self.max_samples]
-                        inputs = {'encoder_input': X, 'decoder_input': Y1}
-                        outputs = {'projection_output': Y3, 'decoder_output': Y2}
-                        hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
-                                optimizer='adam', dropout= 0.5, 
-                                max_seq_length=inputs['encoder_input'].shape[1],
-                                embed_dim=self.embedding_matrix.shape[-1],
-                                num_embeddings=self.embedding_matrix.shape[0],
-                                activation='relu',
-                                latent_dim=1000)
+                        # _, X, Y1, Y2, Y3 = self.data_helper.cap2all()
+                        # #X, Y1, Y2, Y3 = X[:20], Y1[:20], Y2[:20], Y3[:20]
+                        # Y2 = np.expand_dims(Y2, axis=2)
+                        # Y3 = Y3[:,0,:]
+                        # if self.max_samples is not None:
+                        #     X, Y1, Y2, Y3 = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples], Y3[:self.max_samples]
+                        # inputs = {'encoder_input': X, 'decoder_input': Y1}
+                        # outputs = {'projection_output': Y3, 'decoder_output': Y2}
+                        datagen = self.data_helper.cap2all()
+                        valgen = self.val_helper.cap2all()
                         cap2 = Cap2All(hparams, embeddings=self.embedding_matrix)
                         callbacks += self.custom_metrics
+                    
                     if self.path_load_model is not None:
                         print("Loading model "+self.path_load_model+" ...")
                         cap2.load_model(self.path_load_model)

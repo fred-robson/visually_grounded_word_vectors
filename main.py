@@ -41,10 +41,13 @@ def hp_search(args):
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
 
+    ValCaptions = CocoCaptions(1)
+    ValCaptions.initialize_WV(WV)
+
     embedding_matrix = WV.get_embedding_matrix()
     metrics = Metrics()
 
-    hp_searcher = HPSearcher([0.0001], embedding_matrix, args.model, Captions, custom_metrics = [metrics], max_samples=args.max_samples, path_load_model=args.load)
+    hp_searcher = HPSearcher([0.0001], embedding_matrix, args.model, Captions, custom_metrics = [metrics], max_samples=args.max_samples, path_load_model=args.load, val_helper=ValCaptions)
     results = hp_searcher.run()
 
 
@@ -79,6 +82,9 @@ def main(args):
     Captions = CocoCaptions(args.data)
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
+
+    ValCaptions = CocoCaptions(1)
+    ValCaptions.initialize_WV(WV)
 
     embedding_matrix = WV.get_embedding_matrix()
     metrics = Metrics()
@@ -128,11 +134,12 @@ def main(args):
     else:
         if self.model[:4] == "cap2":
             inputs, outputs = None, None
+            datagen, valgen = None, None
             cap2 = None
             callbacks = [callback_log]
 
             if self.model == 'cap2cap':
-                _, X, Y1, Y2 = self.data_helper.cap2cap()
+                datagen = Captions.cap2cap()
                 if self.max_samples is not None:
                     X, Y1, Y2, = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples]
                 Y2 = np.expand_dims(Y2, axis=2)
@@ -150,7 +157,7 @@ def main(args):
                 callbacks += self.custom_metrics
 
             if self.model == 'cap2img':
-                _, X, Y = self.data_helper.cap2resnet()
+                _, X, Y = Captions.cap2resnet()
                 Y = Y[:,0,:]
                 inputs = {'encoder_input': X}
                 outputs = {'projection_output': Y}
@@ -164,7 +171,7 @@ def main(args):
                 cap2 = Cap2Img(hparams, embeddings=self.embedding_matrix)
 
             if self.model == 'cap2all':
-                _, X, Y1, Y2, Y3 = self.data_helper.cap2all()
+                _, X, Y1, Y2, Y3 = Captions.cap2all()
                 X, Y1, Y2, Y3 = X[:20], Y1[:20], Y2[:20], Y3[:20]
                 Y2 = np.expand_dims(Y2, axis=2)
                 Y3 = Y3[:,0,:]
