@@ -465,6 +465,8 @@ def test_CocoCaptions():
 	train,val = Captions.split_train_val()
 	print(len(train.get_all_image_ids()))
 	print(len(val.get_all_image_ids()))
+	print(type(train))
+	print(type(Captions))
 	quit()
 	Captions = train
 
