@@ -126,7 +126,7 @@ class HPSearcher(object):
 
                     hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
                                 optimizer='adam', dropout= 0.5, 
-                                max_seq_length=data_helper.max_caption_len,
+                                max_seq_length=self.data_helper.max_caption_len,
                                 embed_dim=self.embedding_matrix.shape[-1],
                                 num_embeddings=self.embedding_matrix.shape[0],
                                 activation='relu',
@@ -181,7 +181,7 @@ class HPSearcher(object):
                     #                 validation_split=0.2,
                     #                 validation_data=validation_data,
                     #                 callbacks=callbacks)
-                    history = fit_generator(datagen,
+                    history = model.fit_generator(datagen,
                                     epochs=10,
                                     validation_data=valgen,
                                     callbacks=callbacks,
@@ -235,5 +235,6 @@ class HPSearcher(object):
                     acq_func='EI', # Expected Improvement.
                     n_calls=10,
                     n_random_starts=4,
-                    x0=self.default_parameters)
+                    x0=None,
+                    y0 = None)
         return search_result

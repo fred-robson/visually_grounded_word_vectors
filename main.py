@@ -41,7 +41,7 @@ def hp_search(args):
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
 
-    ValCaptions = CocoCaptions(1)
+    ValCaptions = CocoCaptions(3)
     ValCaptions.initialize_WV(WV)
 
     embedding_matrix = WV.get_embedding_matrix()
@@ -201,7 +201,7 @@ def main(args):
             #                 validation_split=0.2,
             #                 validation_data=validation_data,
             #                 callbacks=callbacks)
-            history = fit_generator(datagen,
+            history = model.fit_generator(datagen,
                                     epochs=10,
                                     validation_data=valgen,
                                     callbacks=callbacks,
