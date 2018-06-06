@@ -188,7 +188,7 @@ class CaptionsSuper():
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
 		list_image_ids = self.get_all_image_ids()
-		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2cap_batch(x))
+		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2cap_batch(x),batch_size)
 		return DG 
 
 	def get_cap2resnet_batch(self,list_image_ids):
@@ -208,10 +208,10 @@ class CaptionsSuper():
 		return dict(batch_x),dict(batch_y)
 
 
-	def cap2resnet(self,batch_size=32):
+	def cap2resnet(self,batch_size=10):
 		if self.WV is None: raise "Call initialize_WV() first" 
 		list_image_ids = self.get_all_image_ids()
-		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x))
+		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x),batch_size)
 		return DG 
 
 	def get_cap2all_batch(self,list_image_ids):
@@ -232,13 +232,12 @@ class CaptionsSuper():
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
 		#batch_y['decoder_output'] = np.expand_dims(batch_y['decoder_output'], axis=2)
 		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
-
 		return dict(batch_x),dict(batch_y)
 
 	def cap2all(self,batch_size=8):
 		if self.WV is None: raise "Call initialize_WV() first"
 		list_image_ids = self.get_all_image_ids()
-		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x))
+		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x),batch_size)
 		return DG 
 
 	
