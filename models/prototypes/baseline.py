@@ -11,14 +11,40 @@ from keras.layers import TimeDistributed
 from keras.layers import Embedding
 from keras.layers import Maximum
 from keras.layers import Masking
+from keras.layers import Layer
+from keras.layers import Lambda 
+from keras.layers import Add
+from keras.layers import Multiply
 from tensorflow.contrib.training import HParams
 import keras.backend as K
 from keras.utils import plot_model
 from keras import metrics as k_metrics
 
+def KL_divergence(y_true, y_pred):
+	loss = 0.0
+	return loss
+
 def ranking_loss(y_true, y_pred):
 	loss = K.constant(0)
 	return loss
+
+class KLDivergenceLayer(Layer):
+
+    """ Identity transform layer that adds KL divergence
+    to the final model loss.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.is_placeholder = True
+        super().__init__(*args, **kwargs)
+
+    def call(self, inputs):
+        mu, log_var = inputs
+        kl_batch = - .5 * K.sum(1 + log_var -
+                                K.square(mu) -
+                                K.exp(log_var), axis=-1)
+        self.add_loss(K.mean(kl_batch), inputs=inputs)
+        return inputs
 
 class Cap2(object):
 
@@ -134,6 +160,36 @@ class Cap2All(Cap2Cap, Cap2Img):
 		outputs = [projection_output, decoder_output]
 		return inputs, outputs
 
+class Vae2All(Cap2Cap, Cap2Img):
+	loss = {**Cap2Cap.loss, **Cap2Img.loss}
+	metrics = {'decoder_outputf':'sparse_categorical_accuracy'}
+	loss_weights={'decoder_output':1., 'projection_output':0.5}
+	def __init__(self, h_params, **kwds):
+		super().__init__(h_params, **kwds)
+		self.model_type = 'vae2all'
+		#print(self.loss)
+	
+	def _variational(self, x):
+		z_mu = Dense(self.h_params.hidden_dim)(x)
+		z_log_var = Dense(self.h_params.hidden_dim)(x)
+
+		z_mu, z_log_var = KLDivergenceLayer()([z_mu, z_log_var])
+		z_sigma = Lambda(lambda t: K.exp(.5*t))(z_log_var)
+		eps = Input(tensor=K.random_normal(shape=(K.shape(x)[0],
+		                                          self.h_params.hidden_dim)))
+		z_eps = Multiply()([z_sigma, eps])
+		z = Add()([z_mu, z_eps])
+		return z, eps
+
+	def _build(self):
+		encoder_input, encoder_output, encoder_out_cell = self._encoder()
+		z, eps = self._variational(encoder_output)
+		projection_output = self._projection(z)
+		decoder_input, decoder_output = self._decoder([z, encoder_out_cell])
+		inputs = [encoder_input, decoder_input, eps]
+		outputs = [projection_output, decoder_output]
+		return inputs, outputs
+
 if __name__ == '__main__':
 	embedding_matrix = np.random.randn(10000,50)
 	hparams = HParams(learning_rate=0.01, hidden_dim=1024,
@@ -143,7 +199,7 @@ if __name__ == '__main__':
 						num_embeddings=embedding_matrix.shape[0],
 						activation='relu',
 						latent_dim=1000)
-	cap2 = Cap2All(hparams, embeddings=embedding_matrix)
-	cap2.load_model('models/saved/cap2all_best_model.keras')
+	cap2 = Vae2All(hparams, embeddings=embedding_matrix)
+	cap2.compile()
 	cap2.visualize()
 

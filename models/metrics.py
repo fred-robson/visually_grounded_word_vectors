@@ -11,7 +11,7 @@ class Metrics(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         val_predict = None
-        preds = self.model.predict([self.validation_data[0], self.validation_data[1]])
+        preds = self.model.predict_generator(self.validation_data)
         for item in preds:
             if len(item.shape) == 3:
                 val_predict = (np.asarray(item))

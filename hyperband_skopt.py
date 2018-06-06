@@ -99,7 +99,6 @@ class HPSearcher(object):
             validation_data=None
             # Create the neural network with these hyper-parameters.
             #K.clear_session()
-            tf.reset_default_graph()
             if self.model == 'toy':
 
                 X = np.random.randint(0, 6, size=(3000,50))
@@ -179,13 +178,18 @@ class HPSearcher(object):
                     
                     cap2.compile()
                     model = cap2.model
-                    history = model.fit(inputs,
-                                    outputs,
-                                    epochs=3,
-                                    batch_size=256,
-                                    validation_split=0.2,
-                                    validation_data=validation_data,
-                                    callbacks=callbacks)
+                    # history = model.fit(inputs,
+                    #                 outputs,
+                    #                 epochs=3,
+                    #                 batch_size=256,
+                    #                 validation_split=0.2,
+                    #                 validation_data=validation_data,
+                    #                 callbacks=callbacks)
+                    history = fit_generator(datagen,
+                                    epochs=10,
+                                    validation_data=valgen,
+                                    callbacks=callbacks,
+                                    )
 
 
             # Get the classification accuracy on the validation-set

@@ -108,7 +108,6 @@ def main(args):
     history = None
     validation_data=None
     # Create the neural network with these hyper-parameters.
-    K.clear_session()
     if self.model == 'toy':
 
         X = np.random.randint(0, 6, size=(3000,50))
@@ -185,14 +184,21 @@ def main(args):
             if self.path_load_model is not None:
                 print("Loading model "+self.path_load_model+" ...")
                 cap2.load_model(self.path_load_model)
+            
+            cap2.compile()
             model = cap2.model
-            history = model.fit(inputs,
-                            outputs,
-                            epochs=3,
-                            batch_size=128,
-                            validation_split=0.2,
-                            validation_data=validation_data,
-                            callbacks=callbacks)
+            # history = model.fit(inputs,
+            #                 outputs,
+            #                 epochs=3,
+            #                 batch_size=128,
+            #                 validation_split=0.2,
+            #                 validation_data=validation_data,
+            #                 callbacks=callbacks)
+            history = fit_generator(datagen,
+                                    epochs=10,
+                                    validation_data=valgen,
+                                    callbacks=callbacks,
+                                    )
 
 
     # Get the classification accuracy on the validation-set
