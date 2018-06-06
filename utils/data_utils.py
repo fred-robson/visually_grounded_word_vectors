@@ -456,15 +456,18 @@ class FlickrCaptions(CaptionsSuper):
 
 def test_CocoCaptions():
 
-	Captions = CocoCaptions(3,50)
+	Captions = CocoCaptions(0,50)
 	print(len(Captions.get_all_image_ids()))
 
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
+	print("Caption: Combined",Captions.max_caption_len)
 
 	train,val = Captions.split_train_val()
 	print(len(train.get_all_image_ids()))
 	print(len(val.get_all_image_ids()))
+	print("Caption: Train",train.max_caption_len)
+	print("Caption: Val",val.max_caption_len)
 	print(type(train))
 	print(type(Captions))
 	quit()
