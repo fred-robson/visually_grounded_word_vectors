@@ -42,6 +42,8 @@ def hp_search(args):
     Captions.initialize_WV(WV)
 
     Captions,ValCaptions = Captions.split_train_val()
+    print("Caption: Train",Captions.max_caption_len)
+    print("Caption: Val",ValCaptions.max_caption_len)
 
     embedding_matrix = WV.get_embedding_matrix()
     metrics = Metrics()
