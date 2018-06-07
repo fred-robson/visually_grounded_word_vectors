@@ -2,6 +2,7 @@ import numpy as np
 import keras
 from keras.callbacks import Callback
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, precision_recall_fscore_support
+import gc
 
 def unpack_generator(generator):
     unpack = []
@@ -39,6 +40,7 @@ class Metrics(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         val_predict = None
+        gc.collect()
         if isinstance(self.validation_data, keras.utils.Sequence): 
             preds = self.model.predict_generator(self.validation_data)
         else:
