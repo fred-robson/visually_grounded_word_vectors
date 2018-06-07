@@ -141,7 +141,7 @@ class HPSearcher(object):
                         if self.gen == 'all':
                             val_data = get_data(self.model, self.val_helper, gen=True)
                         else:
-                            val_data = tqdm(get_data(self.model, self.val_helper))
+                            val_data = get_data(self.model, self.val_helper)
                     else:
                         data = get_data(self.model, self.data_helper)
                         val_data = get_data(self.model, self.val_helper)
