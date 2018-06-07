@@ -3,6 +3,33 @@ import keras
 from keras.callbacks import Callback
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, precision_recall_fscore_support
 
+def unpack_generator(generator):
+    unpack = []
+    output_generator = iter(generator)
+    gen = [next(output_generator) for _ in range(len(generator))]
+    inputs, outputs = zip(*gen)
+    inputs = [tuple(i.values()) for i in inputs]
+    for i in zip(*inputs):
+        array=[]
+        arrays = np.asarray(i)
+        for j in range(arrays.shape[0]):
+            if j == 0: 
+                array = arrays[j]
+            else:
+                array = np.concatenate((array, arrays[j]), axis=0)
+        unpack += [array]
+    outputs = [tuple(o.values()) for o in outputs]
+    for i in zip(*outputs):
+        array=[]
+        arrays = np.asarray(i)
+        for j in range(arrays.shape[0]):
+            if j == 0:
+                array = arrays[j]
+            else:
+                array = np.concatenate((array, arrays[j]), axis=0)
+        unpack += [array]
+    return unpack
+
 class Metrics(Callback):
 
     def on_train_begin(self, logs={}):
@@ -15,15 +42,17 @@ class Metrics(Callback):
         if isinstance(self.validation_data, keras.utils.Sequence): 
             preds = self.model.predict_generator(self.validation_data)
         else:
-            if isinstance(self.validation_data, list):
+            if isinstance(self.validation_data, tuple):
                 preds = preds = self.model.predict([self.validation_data[0], self.validation_data[1]])
-        for item in preds:
+        for item in list(preds):
             if len(item.shape) == 3:
                 val_predict = (np.asarray(item))
                 break
         val_predict = np.argmax(val_predict, axis=2)
         val_targ=None
-        for item in self.validation_data:
+        if isinstance(self.validation_data, keras.utils.Sequence):
+            validation_data = unpack_generator(self.validation_data)
+        for item in validation_data:
             if len(item.shape)==3:
                 val_targ = item[:,:,0]
                 break

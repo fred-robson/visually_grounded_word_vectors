@@ -43,7 +43,7 @@ def _log_dir_name(learning_rate, model):
 
 class HPSearcher(object):
 
-    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], max_samples=None, val_helper=None, epochs=1):
+    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], max_samples=None, val_helper=None, epochs=1, gen=None):
         self.default_parameters = default_parameters
         self.embedding_matrix = embedding_matrix
         self.model = model
@@ -57,6 +57,7 @@ class HPSearcher(object):
         self.path_load_model = path_load_model
         self.max_samples = max_samples
         self.epochs=1
+        self.gen = gen
 
 
     def _search_space(self):
@@ -134,9 +135,9 @@ class HPSearcher(object):
                                 activation='relu',
                                 latent_dim=1000)
 
-                    if args.gen == 'train' or args.gen == 'all':
+                    if self.gen == 'train' or self.gen == 'all':
                         data = get_data(self.model, self.data_helper, gen=True)
-                        if args.gen == 'all':
+                        if self.gen == 'all':
                             val_data = get_data(self.model, self.val_helper, gen=True)
                         else:
                             val_data = get_data(self.model, self.val_helper)
@@ -150,9 +151,9 @@ class HPSearcher(object):
                         # validation_data=None
                         # inputs = {'encoder_input': X, 'decoder_input': Y1}
                         # outputs = {'decoder_output': Y2}
-                        
 
-                    if self.model != 'cap2img':
+                    if self.model is not 'cap2img':
+                        self.custom_metrics[0].validation_data = val_data
                         callbacks += self.custom_metrics
                         # _, X, Y = self.data_helper.cap2resnet()
                         # Y = Y[:,0,:]
@@ -188,16 +189,17 @@ class HPSearcher(object):
                     if isinstance(data, keras.utils.Sequence):
                         history = model.model.fit_generator(data,
                                     epochs=self.epochs,
-                                    validation_data=valgen,
+                                    validation_data=val_data,
                                     callbacks=callbacks,
                                     )
-                    elif isinstance(data, list):
+                    elif isinstance(data, tuple):
                         history = model.model.fit(x=data[0],
                                         y=data[1],
                                         epochs=self.epochs,
                                         validation_data=val_data,
                                         callbacks=callbacks,
                                         )
+
 
 
             # Get the classification accuracy on the validation-set

@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import random as rn
-import keras 
+import keras
 import os
 os.environ['KERAS_BACKEND'] = 'tensorflow'
 import argparse
@@ -56,7 +56,8 @@ def hp_search(args):
                             max_samples=args.max_samples, 
                             path_load_model=args.load, 
                             val_helper=ValCaptions,
-                            epochs=args.epochs)
+                            epochs=args.epochs,
+                            gen = args.gen)
     results = hp_searcher.run()
 
 

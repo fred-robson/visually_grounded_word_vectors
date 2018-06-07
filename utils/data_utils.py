@@ -541,8 +541,8 @@ def test_FlickCaptions():
 		quit()
 
 def get_data(model_type, data_helper, gen=False):
-	data_dict={'cap2cap':data_helper.cap2cap, 'cap2img':data_helper.cap2resnet, 'cap2all':data_helper.cap2all, 'vae2all':data_helper.cap2all}
-	gen_dict={'cap2cap':data_helper.cap2cap_complete, 'cap2img':data_helper.cap2resnet_complete, 'cap2all':data_helper.cap2all_complete, 'vae2all':data_helper.cap2all_complete}
+	gen_dict={'cap2cap':data_helper.cap2cap, 'cap2img':data_helper.cap2resnet, 'cap2all':data_helper.cap2all, 'vae2all':data_helper.cap2all}
+	data_dict={'cap2cap':data_helper.cap2cap_complete, 'cap2img':data_helper.cap2resnet_complete, 'cap2all':data_helper.cap2all_complete, 'vae2all':data_helper.cap2all_complete}
 
 	if gen:
 		data_func = gen_dict[model_type]

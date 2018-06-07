@@ -16,7 +16,7 @@ from keras.layers import Lambda
 from keras.layers import Add
 from keras.layers import Multiply
 from tensorflow.contrib.training import HParams
-import keras.backend as K
+from keras import backend as K
 from keras.utils import plot_model
 from keras import metrics as k_metrics
 
