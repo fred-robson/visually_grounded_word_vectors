@@ -13,7 +13,7 @@ import numpy as np
 from word_vec_utils import GloVeVectors,CaptionGloveVectors,pad,unk
 from keras.preprocessing.sequence import pad_sequences
 from data_generator import DataGenerator
-import copy, random
+import copy, random,keras
 
 class CaptionsSuper():
 
@@ -213,6 +213,9 @@ class CaptionsSuper():
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2cap_batch(x),batch_size)
 		return DG 
 
+	def cap2cap_complete(self):
+		return self.get_cap2cap_batch(list(self.data.keys()))
+
 	def get_cap2resnet_batch(self,list_image_ids):
 		#yield({“encoder_input:” X}, {“projection_output”:Y})
 		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
@@ -235,6 +238,9 @@ class CaptionsSuper():
 		list_image_ids = self.get_all_image_ids()
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x),batch_size)
 		return DG 
+
+	def cap2resnet_complete(self):
+		return self.get_cap2resnet_batch(list(self.data.keys()))
 
 	def get_cap2all_batch(self,list_image_ids):
 		#yield({“encoder_input:” X, “decoder_input”: Y1}, {“decoder_output”:Y2, “projection_output”:Y3})
@@ -262,7 +268,9 @@ class CaptionsSuper():
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x),batch_size)
 		return DG 
 
-	
+	def cap2all_complete(self):
+		return self.get_cap2all_batch(list(self.data.keys()))
+
 
 	def get_negative_samples(self,image_id_list,num_negative=5):
 
@@ -456,55 +464,74 @@ class FlickrCaptions(CaptionsSuper):
 
 def test_CocoCaptions():
 
-	Captions = CocoCaptions(0)
+	Captions = CocoCaptions(3)
 	print(len(Captions.get_all_image_ids()))
 
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
 	print("Caption: Combined",Captions.max_caption_len)
 
+
 	train,val = Captions.split_train_val()
-	print(len(train.get_all_image_ids()))
-	print(len(val.get_all_image_ids()))
 	print("Caption: Train",train.max_caption_len)
+	print(isinstance(train.cap2resnet(),keras.utils.Sequence))
 	print("Caption: Val",val.max_caption_len)
-	print(type(train))
-	print(type(Captions))
-	quit()
-	Captions = train
+	print(isinstance(val.cap2resnet(),keras.utils.Sequence))
+	
+	for Captions in [Captions]:
 
-	ret = Captions.get_negative_samples([('1355','tiny'), ('78','tiny')])
-	print(ret.shape)
+		ret = Captions.get_negative_samples([('1355','tiny'), ('78','tiny')])
+		print(ret.shape)
 
-	for i,(X,Y) in tqdm(enumerate(Captions.cap2cap())):
-		if i == 0: 
-			print(X)
-			print(Y)
-		if i == 6: break
+		print("**************")
+		print("   cap2cap    ")
+		print("**************")
+		
+		print("batch")
+		for i,(X,Y) in tqdm(enumerate(Captions.cap2cap())):
+			if i == 0: 
+				for k,v in X.items(): print(k,v.shape)
+				for k,v in Y.items(): print(k,v.shape)
+			if i == 6: break
 
-	print("**************")
-	print("loaded cap2cap")
-	print("**************")
+		print("complete")
+		X,Y = Captions.cap2cap_complete()
+		for k,v in X.items(): print(k,v.shape)
+		for k,v in Y.items(): print(k,v.shape)
 
-	for i,(X,Y) in tqdm(enumerate(Captions.cap2resnet())):
-		if i == 0: 
-			print(X)
-			print(Y)
-		if i == 6: break
+		print("*****************")
+		print("   cap2resnet    ")
+		print("*****************")
 
-	print("*****************")
-	print("loaded cap2resnet")
-	print("*****************")
+		print("batch")
+		for i,(X,Y) in tqdm(enumerate(Captions.cap2resnet())):
+			if i == 0: 
+				for k,v in X.items(): print(k,v.shape)
+				for k,v in Y.items(): print(k,v.shape)
+			if i == 6: break
 
-	for i,(X,Y) in tqdm(enumerate(Captions.cap2all())):
-		if i == 0: 
-			print(X)
-			print(Y)
-		if i == 6: break
+		print("complete")
 
-	print("*****************")
-	print("loaded cap2all")
-	print("*****************")
+		X,Y = Captions.cap2resnet_complete()
+		for k,v in X.items(): print(k,v.shape)
+		for k,v in Y.items(): print(k,v.shape)
+
+		
+		print("*****************")
+		print("     cap2all     ")
+		print("*****************")
+
+		print("batch")
+		for i,(X,Y) in tqdm(enumerate(Captions.cap2all())):
+			if i == 0: 
+				for k,v in X.items(): print(k,v.shape)
+				for k,v in Y.items(): print(k,v.shape)
+			if i == 6: break
+
+		print("complete")
+		X,Y = Captions.cap2all_complete()
+		for k,v in X.items(): print(k,v.shape)
+		for k,v in Y.items(): print(k,v.shape)
 
 
 def test_FlickCaptions():

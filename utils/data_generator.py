@@ -1,5 +1,6 @@
 import keras
 import numpy as np
+import keras
 
 #See here for more information 
 #https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly.html
@@ -13,6 +14,7 @@ class DataGenerator(keras.utils.Sequence):
         self.shuffle = shuffle
         self.__data_generation = __data_generation
         self.on_epoch_end()
+        keras.utils.Sequence.__init__(self)
 
     def __len__(self):
         'Denotes the number of batches per epoch'
