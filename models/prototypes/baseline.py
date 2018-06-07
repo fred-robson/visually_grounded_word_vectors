@@ -25,6 +25,7 @@ def KL_divergence(y_true, y_pred):
 	return loss
 
 def ranking_loss(y_true, y_pred):
+	ids = y_pred[:,0]
 	loss = K.constant(0)
 	return loss
 

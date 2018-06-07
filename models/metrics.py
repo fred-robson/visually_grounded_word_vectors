@@ -1,4 +1,5 @@
 import numpy as np
+import keras
 from keras.callbacks import Callback
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, precision_recall_fscore_support
 
@@ -11,8 +12,11 @@ class Metrics(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         val_predict = None
-        print(type(self.validation_data))
-        preds = self.model.predict_generator(self.validation_data)
+        if isinstance(self.validation_data, keras.utils.Sequence): 
+            preds = self.model.predict_generator(self.validation_data)
+        else:
+            if isinstance(self.validation_data, list):
+                preds = preds = self.model.predict([self.validation_data[0], self.validation_data[1]])
         for item in preds:
             if len(item.shape) == 3:
                 val_predict = (np.asarray(item))

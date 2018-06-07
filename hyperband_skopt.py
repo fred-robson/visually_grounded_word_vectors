@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import keras
+from utils.data_utils import get_data
 
 from keras import backend as K
 from keras.models import Sequential
@@ -133,7 +134,15 @@ class HPSearcher(object):
                                 activation='relu',
                                 latent_dim=1000)
 
-                    if self.model == 'cap2cap':
+                    if args.gen == 'train' or args.gen == 'all':
+                        data = get_data(self.model, self.data_helper, gen=True)
+                        if args.gen == 'all':
+                            val_data = get_data(self.model, self.val_helper, gen=True)
+                        else:
+                            val_data = get_data(self.model, self.val_helper)
+                    else:
+                        data = get_data(self.model, self.data_helper)
+                        val_data = get_data(self.model, self.val_helper)
                         # _, X, Y1, Y2 = self.data_helper.cap2cap()
                         # if self.max_samples is not None:
                         #     X, Y1, Y2, = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples]
@@ -141,19 +150,15 @@ class HPSearcher(object):
                         # validation_data=None
                         # inputs = {'encoder_input': X, 'decoder_input': Y1}
                         # outputs = {'decoder_output': Y2}
-                        datagen = self.data_helper.cap2cap()
-                        valgen = self.val_helper.cap2cap()
-                        callbacks += self.custom_metrics
+                        
 
-                    if self.model == 'cap2img':
+                    if self.model != 'cap2img':
+                        callbacks += self.custom_metrics
                         # _, X, Y = self.data_helper.cap2resnet()
                         # Y = Y[:,0,:]
                         # inputs = {'encoder_input': X}
                         # outputs = {'projection_output': Y}
-                        datagen = self.data_helper.cap2resnet()
-                        valgen = self.val_helper.cap2resnet()
 
-                    if self.model[-3:] == 'all':
                         # _, X, Y1, Y2, Y3 = self.data_helper.cap2all()
                         # #X, Y1, Y2, Y3 = X[:20], Y1[:20], Y2[:20], Y3[:20]
                         # Y2 = np.expand_dims(Y2, axis=2)
@@ -162,9 +167,6 @@ class HPSearcher(object):
                         #     X, Y1, Y2, Y3 = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples], Y3[:self.max_samples]
                         # inputs = {'encoder_input': X, 'decoder_input': Y1}
                         # outputs = {'projection_output': Y3, 'decoder_output': Y2}
-                        datagen = self.data_helper.cap2all()
-                        valgen = self.val_helper.cap2all()
-                        callbacks += self.custom_metrics
 
                     ModelClass = get_model(self.model)
                     model = ModelClass(hparams, embeddings=self.embedding_matrix)
@@ -182,11 +184,20 @@ class HPSearcher(object):
                     #                 validation_split=0.2,
                     #                 validation_data=validation_data,
                     #                 callbacks=callbacks)
-                    history = model.model.fit_generator(datagen,
+                    
+                    if isinstance(data, keras.utils.Sequence):
+                        history = model.model.fit_generator(data,
                                     epochs=self.epochs,
                                     validation_data=valgen,
                                     callbacks=callbacks,
                                     )
+                    elif isinstance(data, list):
+                        history = model.model.fit(x=data[0],
+                                        y=data[1],
+                                        epochs=self.epochs,
+                                        validation_data=val_data,
+                                        callbacks=callbacks,
+                                        )
 
 
             # Get the classification accuracy on the validation-set

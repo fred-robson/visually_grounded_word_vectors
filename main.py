@@ -258,6 +258,8 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load saved model')
     parser.add_argument('--path', help='save path', default='')
     parser.add_argument('--epochs', help='number of epochs', type=int, default=1)
+    parser.add_argument('-g','--gen',help='whether to use generator for train or both train and val')
+
 
     args = parser.parse_args()
 
