@@ -99,6 +99,18 @@ class CaptionsSuper():
 			lengths += [len(c) for c in captions]
 		return max(lengths)
 
+	def get_captions_np(self):
+		if self.WV is None: raise "Call initialize_WV() first"
+		captions_np = []
+		image_ids = []
+		for captions,image_id in self.get_all_captions():
+			for c in captions:
+				x = self.WV.words_to_indices(c)
+				x = self.pad_sequences(x)
+				captions_np.append(x)
+				image_ids.append(image_id)
+		return np.array(captions_np),image_ids
+
 	###############
 	# Image Stuff #
 	###############
@@ -469,6 +481,7 @@ def test_CocoCaptions():
 
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
+	print(Captions.get_captions_np())
 	print("Caption: Combined",Captions.max_caption_len)
 
 
