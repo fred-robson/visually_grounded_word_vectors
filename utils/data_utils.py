@@ -29,7 +29,7 @@ class CaptionsSuper():
 		self.WV = None
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
 
-	def split_train_val(self,percent_train=0.01):
+	def split_train_val(self,percent_train=0.9):
 		train = copy.deepcopy(self)
 		train_data = {}
 		val = copy.deepcopy(self)
@@ -214,7 +214,7 @@ class CaptionsSuper():
 		return dict(batch_x),dict(batch_y)
 
 
-	def cap2cap(self,batch_size=1):
+	def cap2cap(self,batch_size=8):
 		'''
 		Returns X,Y where each x_i is a list of indices of a caption
 		and each y_i is a list of indices of a different caption 
@@ -245,7 +245,7 @@ class CaptionsSuper():
 		return dict(batch_x),dict(batch_y)
 
 
-	def cap2resnet(self,batch_size=1):
+	def cap2resnet(self,batch_size=8):
 		if self.WV is None: raise "Call initialize_WV() first" 
 		list_image_ids = self.get_all_image_ids()
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x),batch_size)
@@ -274,7 +274,7 @@ class CaptionsSuper():
 		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
 		return dict(batch_x),dict(batch_y)
 
-	def cap2all(self,batch_size=1):
+	def cap2all(self,batch_size=8):
 		if self.WV is None: raise "Call initialize_WV() first"
 		list_image_ids = self.get_all_image_ids()
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x),batch_size)

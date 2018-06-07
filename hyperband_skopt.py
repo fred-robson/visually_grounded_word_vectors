@@ -28,6 +28,7 @@ from models.prototypes.baseline import Cap2Cap, Cap2Img, Cap2All, Vae2All, get_m
 from tensorflow.contrib.training import HParams
 from skopt.utils import use_named_args
 from datetime import datetime
+from tqdm import tqdm
 
 
 def _log_dir_name(learning_rate, model):
@@ -140,7 +141,7 @@ class HPSearcher(object):
                         if self.gen == 'all':
                             val_data = get_data(self.model, self.val_helper, gen=True)
                         else:
-                            val_data = get_data(self.model, self.val_helper)
+                            val_data = tqdm(get_data(self.model, self.val_helper))
                     else:
                         data = get_data(self.model, self.data_helper)
                         val_data = get_data(self.model, self.val_helper)
