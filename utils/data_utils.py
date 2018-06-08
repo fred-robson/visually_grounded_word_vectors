@@ -561,11 +561,13 @@ def get_data(model_type, data_helper, gen=False):
 		data = gen_dict[model_type]()
 	else:
 		data = data_dict[model_type]()
+		new_data = []
 		for i,d in enumerate(data):
 			for k,v in d.items():
 				limit = v.shape[0] - v.shape[0]%32
 				d[k] = v[:limit]
-			data[i] = d
+			new_data.append(d)
+		data = new_data
 
 	return data
 
