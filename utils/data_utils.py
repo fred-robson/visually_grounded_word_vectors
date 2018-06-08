@@ -558,10 +558,16 @@ def get_data(model_type, data_helper, gen=False):
 	data_dict={'cap2cap':data_helper.cap2cap_complete, 'cap2img':data_helper.cap2resnet_complete, 'cap2all':data_helper.cap2all_complete, 'vae2all':data_helper.cap2all_complete}
 
 	if gen:
-		data_func = gen_dict[model_type]
+		data = gen_dict[model_type]()
 	else:
-		data_func = data_dict[model_type]
-	return data_func()
+		data = data_dict[model_type]()
+		for i,d in enumerate(data):
+			for k,v in d.items():
+				limit = v.shape[0] - v.shape[0]%32
+				d[k] = v[:limit]
+			data[i] = d
+
+	return data
 
 if __name__ == "__main__":
 	#test_FlickCaptions()
