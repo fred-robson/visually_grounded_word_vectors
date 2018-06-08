@@ -205,8 +205,6 @@ class HPSearcher(object):
                                         epochs=self.epochs,
                                         validation_data=val_data,
                                         callbacks=callbacks,
-                                        workers = 4,
-                                        use_multiprocessing=True
                                         )
 
 
