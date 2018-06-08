@@ -57,7 +57,8 @@ def hp_search(args):
                             path_load_model=args.load, 
                             val_helper=ValCaptions,
                             epochs=args.epochs,
-                            gen = args.gen)
+                            gen = args.gen,
+                            gpu = args.gpu)
     results = hp_searcher.run()
 
 def encode(args):
