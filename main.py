@@ -58,7 +58,8 @@ def hp_search(args):
                             val_helper=ValCaptions,
                             epochs=args.epochs,
                             gen = args.gen,
-                            gpu = args.gpu)
+                            gpu = args.gpu,
+                            batch_size=args.batch_size)
     results = hp_searcher.run()
 
 def encode(args):
@@ -308,6 +309,7 @@ if __name__ == '__main__':
     parser.add_argument('-lr','--learning_rate', help='learning_rate', type=int, default=0.00001)
     parser.add_argument('-e', '--encode',help='whether to simply encode captions', action='store_true')
     parser.add_argument('--gpu', help='whether to use gpu or cpu', type=int, default=0)
+    parser.add_argument('--batch_size', help='batch_size', type=int, default=32)
 
 
     args = parser.parse_args()

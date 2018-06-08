@@ -44,7 +44,7 @@ def _log_dir_name(learning_rate, model):
 
 class HPSearcher(object):
 
-    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], max_samples=None, val_helper=None, epochs=1, gen=None, gpu=0):
+    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], batch_size = 32, max_samples=None, val_helper=None, epochs=1, gen=None, gpu=0):
         self.default_parameters = default_parameters
         self.embedding_matrix = embedding_matrix
         self.model = model
@@ -60,6 +60,7 @@ class HPSearcher(object):
         self.epochs=1
         self.gen = gen
         self.gpu = gpu
+        self.batch_size = batch_size
 
 
     def _search_space(self):
@@ -205,7 +206,7 @@ class HPSearcher(object):
                                         epochs=self.epochs,
                                         validation_data=val_data,
                                         callbacks=callbacks,
-                                        batch_size=32
+                                        batch_size=self.batch_size
                                         )
 
 
