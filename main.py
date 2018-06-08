@@ -60,35 +60,63 @@ def hp_search(args):
                             gen = args.gen)
     results = hp_searcher.run()
 
+def encode(args):
 
-def main(args):
-    print(args)
-    # The below is necessary in Python 3.2.3 onwards to
-    # have reproducible behavior for certain hash-based operations.
-    # See these references for further details:
-    # https://docs.python.org/3.4/using/cmdline.html#envvar-PYTHONHASHSEED
-    # https://github.com/keras-team/keras/issues/2280#issuecomment-306959926
-    os.environ['PYTHONHASHSEED'] = '0'
-    # The below is necessary for starting Numpy generated random numbers
-    # in a well-defined initial state.
-    np.random.seed(42)
-    # The below is necessary for starting core Python generated random numbers
-    # in a well-defined state.
-    rn.seed(12345)
-    # Force TensorFlow to use single thread.
-    # Multiple threads are a potential source of
-    # non-reproducible results.
-    # For further details, see: https://stackoverflow.com/questions/42022950/which-seeds-have-to-be-set-where-to-realize-100-reproducibility-of-training-res
-    session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+    Captions = CocoCaptions(args.data,args.max_samples)
+    WV = FilteredGloveVectors()
+    embedding_matrix = WV.get_embedding_matrix()
 
-    from keras import backend as K
-    # The below tf.set_random_seed() will make random number generation
-    # in the TensorFlow backend have a well-defined initial state.
-    # For further details, see: https://www.tensorflow.org/api_docs/python/tf/set_random_seed
-    tf.set_random_seed(1234)
-    sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-    K.set_session(sess)
+    if args.model[:4] == "cap2" or self.model[:4] == "vae2" :
+            inputs, outputs = None, None
+            datagen, valgen = None, None
+            cap2 = None
+            callbacks = [callback_log]
 
+            hparams = HParams(learning_rate=args.learning_rate, hidden_dim=1024,
+                        optimizer='adam', dropout= 0.5, 
+                        max_seq_length=Captions.max_caption_len,
+                        embed_dim=embedding_matrix.shape[-1],
+                        num_embeddings=embedding_matrix.shape[0],
+                        activation='relu',
+                        latent_dim=1000)
+
+            if args.gen == 'train' or args.gen == 'all':
+                data = get_data(self.model, self.data_helper, gen=True)
+                if args.gen == 'all':
+                    val_data = get_data(args.model, args.val_helper, gen=True)
+                else:
+                    val_data = get_data(args.model, args.val_helper)
+            else:
+                data = get_data(self.model, self.data_helper)
+                val_data = get_data(self.model, self.val_helper)
+
+            ModelClass = get_model(self.model)
+            model = ModelClass(hparams, embeddings=self.embedding_matrix)
+            
+            if args.load is not None:
+                print("Loading model "+self.path_load_model+" ...")
+                model.load_model(self.path_load_model)
+            
+            model.compile()
+            
+            if isinstance(data, keras.utils.Sequence):
+                history = model.model.fit_generator(data,
+                            epochs=self.epochs,
+                            validation_data=val_data,
+                            callbacks=callbacks,
+                            )
+            elif isinstance(data, tuple):
+                history = model.model.fit(x=data[0],
+                                y=data[1],
+                                epochs=self.epochs,
+                                validation_data=val_data,
+                                callbacks=callbacks,
+                                )
+
+
+
+
+def train(args):
     Captions = CocoCaptions(args.data,args.max_samples)
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
@@ -99,11 +127,11 @@ def main(args):
     metrics = Metrics()
 
     # Print the hyper-parameters.
-    print('learning rate: {0:.1e}'.format(learning_rate))
+    print('learning rate: {0:.1e}'.format(args.learning_rate))
     print()
     
     # Dir-name for the TensorBoard log-files.
-    log_dir = log_dir_name(learning_rate, args.model)
+    log_dir = log_dir_name(args.learning_rate, args.model)
     
     # Create a callback-function for Keras which will be
     # run after each epoch has ended during training.
@@ -122,8 +150,8 @@ def main(args):
     model = None
     history = None
     validation_data=None
-    # Create the neural network with these hyper-parameters.
-    if self.model == 'toy':
+
+    if args.model == 'toy':
 
         X = np.random.randint(0, 6, size=(3000,50))
         Y = np.random.randint(0, 6, size=(3000,50,1))
@@ -136,82 +164,62 @@ def main(args):
         history = model.fit(X,
                         Y,
                         epochs=1,
-                        batch_size=128,
+                        batch_size=1024,
                         validation_split=0.2,
                         validation_data=validation_data,
-                        callbacks=[callback_log]+self.custom_metrics)
+                        callbacks=[callback_log]+[metrics])
     else:
-        if self.model[:4] == "cap2":
+        if args.model[:4] == "cap2" or args.model[:4] == "vae2" :
             inputs, outputs = None, None
             datagen, valgen = None, None
             cap2 = None
             callbacks = [callback_log]
 
-            if self.model == 'cap2cap':
-                datagen = Captions.cap2cap()
-                Y2 = np.expand_dims(Y2, axis=2)
-                validation_data=None
-                inputs = {'encoder_input': X, 'decoder_input': Y1}
-                outputs = {'decoder_output': Y2}
-                hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
+            hparams = HParams(learning_rate=args.learning_rate, hidden_dim=1024,
                         optimizer='adam', dropout= 0.5, 
-                        max_seq_length=inputs['encoder_input'].shape[1],
-                        embed_dim=self.embedding_matrix.shape[-1],
-                        num_embeddings=self.embedding_matrix.shape[0],
+                        max_seq_length=Captions.max_caption_len,
+                        embed_dim=embedding_matrix.shape[-1],
+                        num_embeddings=embedding_matrix.shape[0],
                         activation='relu',
                         latent_dim=1000)
-                cap2 = Cap2Cap(hparams, embeddings=self.embedding_matrix)
-                callbacks += self.custom_metrics
 
-            if self.model == 'cap2img':
-                _, X, Y = Captions.cap2resnet()
-                Y = Y[:,0,:]
-                inputs = {'encoder_input': X}
-                outputs = {'projection_output': Y}
-                hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
-                        optimizer='adam', dropout= 0.5, 
-                        max_seq_length=inputs['encoder_input'].shape[1],
-                        embed_dim=self.embedding_matrix.shape[-1],
-                        num_embeddings=self.embedding_matrix.shape[0],
-                        activation='relu',
-                        latent_dim=1000)
-                cap2 = Cap2Img(hparams, embeddings=self.embedding_matrix)
+            if args.gen == 'train' or args.gen == 'all':
+                data = get_data(args.model, Captions, gen=True)
+                if args.gen == 'all':
+                    val_data = get_data(args.model, ValCaptions, gen=True)
+                else:
+                    val_data = get_data(args.model, ValCaptions)
+            else:
+                data = get_data(args.model, Captions)
+                val_data = get_data(args.model, ValCaptions)
 
-            if self.model == 'cap2all':
-                _, X, Y1, Y2, Y3 = Captions.cap2all()
-                X, Y1, Y2, Y3 = X[:20], Y1[:20], Y2[:20], Y3[:20]
-                Y2 = np.expand_dims(Y2, axis=2)
-                Y3 = Y3[:,0,:]
-                inputs = {'encoder_input': X, 'decoder_input': Y1}
-                outputs = {'projection_output': Y3, 'decoder_output': Y2}
-                hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
-                        optimizer='adam', dropout= 0.5, 
-                        max_seq_length=inputs['encoder_input'].shape[1],
-                        embed_dim=self.embedding_matrix.shape[-1],
-                        num_embeddings=self.embedding_matrix.shape[0],
-                        activation='relu',
-                        latent_dim=1000)
-                cap2 = Cap2All(hparams, embeddings=self.embedding_matrix)
-                callbacks += self.custom_metrics
-            if self.path_load_model is not None:
-                print("Loading model "+self.path_load_model+" ...")
-                cap2.load_model(self.path_load_model)
+            if args.model is not 'cap2img':
+                metrics.validation_data = val_data
+                callbacks += [metrics]
+
+            ModelClass = get_model(args.model)
+            model = ModelClass(hparams, embeddings=embedding_matrix)
+             
             
-            cap2.compile()
-            model = cap2.model
-            # history = model.fit(inputs,
-            #                 outputs,
-            #                 epochs=3,
-            #                 batch_size=128,
-            #                 validation_split=0.2,
-            #                 validation_data=validation_data,
-            #                 callbacks=callbacks)
-            history = model.fit_generator(datagen,
-                                    epochs=3,
-                                    validation_data=valgen,
-                                    callbacks=callbacks,
-                                    )
-
+            if args.load is not None:
+                print("Loading model "+args.load+" ...")
+                model.load_model(args.load)
+            
+            model.compile()
+            
+            if isinstance(data, keras.utils.Sequence):
+                history = model.model.fit_generator(data,
+                            epochs=args.epochs,
+                            validation_data=val_data,
+                            callbacks=callbacks,
+                            )
+            elif isinstance(data, tuple):
+                history = model.model.fit(x=data[0],
+                                y=data[1],
+                                epochs=args.epochs,
+                                validation_data=val_data,
+                                callbacks=callbacks,
+                                )
 
     # Get the classification accuracy on the validation-set
     # after the last training-epoch.
@@ -247,6 +255,41 @@ def main(args):
     K.clear_session()
 
 
+def main(args):
+    # The below is necessary in Python 3.2.3 onwards to
+    # have reproducible behavior for certain hash-based operations.
+    # See these references for further details:
+    # https://docs.python.org/3.4/using/cmdline.html#envvar-PYTHONHASHSEED
+    # https://github.com/keras-team/keras/issues/2280#issuecomment-306959926
+    os.environ['PYTHONHASHSEED'] = '0'
+    # The below is necessary for starting Numpy generated random numbers
+    # in a well-defined initial state.
+    np.random.seed(42)
+    # The below is necessary for starting core Python generated random numbers
+    # in a well-defined state.
+    rn.seed(12345)
+    # Force TensorFlow to use single thread.
+    # Multiple threads are a potential source of
+    # non-reproducible results.
+    # For further details, see: https://stackoverflow.com/questions/42022950/which-seeds-have-to-be-set-where-to-realize-100-reproducibility-of-training-res
+    session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+
+    from keras import backend as K
+    # The below tf.set_random_seed() will make random number generation
+    # in the TensorFlow backend have a well-defined initial state.
+    # For further details, see: https://www.tensorflow.org/api_docs/python/tf/set_random_seed
+    tf.set_random_seed(1234)
+    sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+    K.set_session(sess)
+
+    if args.encode():
+        encode(args)
+    else:
+        train(args)
+
+    
+
+
 
 
 
@@ -261,6 +304,9 @@ if __name__ == '__main__':
     parser.add_argument('--path', help='save path', default='')
     parser.add_argument('--epochs', help='number of epochs', type=int, default=1)
     parser.add_argument('-g','--gen',help='whether to use generator for train or both train and val')
+    parser.add_argument('-lr','--learning_rate', help='learning_rate', type=int, default=0.00001)
+    parser.add_argument('-e', '--encode',help='whether to simply encode captions', action='store_true')
+    parser.add_argument('--gpu', help='whether to use gpu or cpu', type=int, default=0)
 
 
     args = parser.parse_args()
@@ -268,8 +314,11 @@ if __name__ == '__main__':
     if args.t is False:
         if args.hp:
             hp_search(args)
+        elif args.encode:
+            encode(args)
         else:
             main(args)
+
     else:    
         ## for running any tests
         hparams = HParams()

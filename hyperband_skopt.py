@@ -43,7 +43,7 @@ def _log_dir_name(learning_rate, model):
 
 class HPSearcher(object):
 
-    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], max_samples=None, val_helper=None, epochs=1, gen=None):
+    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], max_samples=None, val_helper=None, epochs=1, gen=None, gpu=0):
         self.default_parameters = default_parameters
         self.embedding_matrix = embedding_matrix
         self.model = model
@@ -58,6 +58,7 @@ class HPSearcher(object):
         self.max_samples = max_samples
         self.epochs=1
         self.gen = gen
+        self.gpu = gpu
 
 
     def _search_space(self):
@@ -177,7 +178,7 @@ class HPSearcher(object):
                         print("Loading model "+self.path_load_model+" ...")
                         model.load_model(self.path_load_model)
                     
-                    model.compile()
+                    model.compile(num_gpu=self.gpu)
                     # history = model.fit(inputs,
                     #                 outputs,
                     #                 epochs=3,
@@ -185,19 +186,26 @@ class HPSearcher(object):
                     #                 validation_split=0.2,
                     #                 validation_data=validation_data,
                     #                 callbacks=callbacks)
-                    
+                    if model.gpu_model is None:
+                        model_to_run = model.model
+                    else:
+                        model_to_run = model.gpu_model
                     if isinstance(data, keras.utils.Sequence):
-                        history = model.model.fit_generator(data,
+                        history = model_to_run.fit_generator(data,
                                     epochs=self.epochs,
                                     validation_data=val_data,
                                     callbacks=callbacks,
+                                    workers=4,
+                                    use_multiprocessing=True
                                     )
                     elif isinstance(data, tuple):
-                        history = model.model.fit(x=data[0],
+                        history = model_to_run.fit(x=data[0],
                                         y=data[1],
                                         epochs=self.epochs,
                                         validation_data=val_data,
                                         callbacks=callbacks,
+                                        workers = 4,
+                                        use_multiprocessing=True
                                         )
 
 

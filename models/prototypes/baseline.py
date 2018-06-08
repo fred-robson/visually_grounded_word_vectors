@@ -48,6 +48,8 @@ class KLDivergenceLayer(Layer):
         return inputs
 
 class Cap2(object):
+	encoder_input = 'encoder_input'
+	encoder_output = 'encoder_output'
 
 	def __init__(self, h_params, embeddings=None, graph_path='./models/visualization/{0}.png'):
 		if type(h_params) is HParams:
@@ -58,15 +60,20 @@ class Cap2(object):
 		self.model_type = None
 		self.graph_path = graph_path
 		self.model = None
+		self.gpu_model = None
+
+	def _encoder_model(self):
+		input_layer = self.model.get_layer(name=self.encoder_input)
+		output_layer = self.model.get_layer(name=self.encoder_output)
+		model = Model(inputs=input_layer, outputs=output_layer)
+		return model
 
 	def visualize(self):
 		path = self.graph_path.format(self.model_type)
 		plot_model(self.model, to_file=path)
 
 	def _encoder(self):
-		## Encoder ##
-		encoder_input = Input(shape=(self.h_params.max_seq_length,),dtype='int32', name='encoder_input')
-		#x = Masking(mask_value=0)(encoder_input)
+		encoder_input = Input(shape=(self.h_params.max_seq_length,),dtype='int32', name=self.encoder_input)
 		glove_embedding_encoder = Embedding(self.h_params.num_embeddings, self.h_params.embed_dim, weights=[self.embedding_matrix], 
 						input_length=self.h_params.max_seq_length, 
 						trainable=False , mask_zero=True, name='GloVe_embedding_encoder')
@@ -76,7 +83,7 @@ class Cap2(object):
 																				dropout=self.h_params.dropout, 
 																				recurrent_dropout=self.h_params.dropout, 
 																				return_state=True), merge_mode=None, name='encoder')(x)
-		encoder_out = Maximum(name='encoder_output')([f_state_h, b_state_h])
+		encoder_out = Maximum(name=self.encoder_output)([f_state_h, b_state_h])
 		encoder_out_cell = Maximum()([f_state_c, b_state_c])
 		return encoder_input, encoder_out, encoder_out_cell
 
@@ -86,11 +93,17 @@ class Cap2(object):
 	def load_model(self, path):
 		self.model = keras.models.load_model(path)
 
-	def compile(self):
+	def compile(self, num_gpu=0):
 		inputs, outputs = self._build()
-		model = Model(inputs=inputs, outputs=outputs)
-		model.name = self.model_type
-		model.compile(loss=self.loss,loss_weights=self.loss_weights,optimizer=self.h_params.optimizer,metrics=self.metrics)
+		with tf.device('/cpu:0'):
+			model = Model(inputs=inputs, outputs=outputs)
+			model.name = self.model_type
+		if num_gpu > 0:
+			 gpu_model = keras.utils.multi_gpu_model(model, gpus=num_gpu)
+			 gpu_model.compile(loss=self.loss,loss_weights=self.loss_weights,optimizer=self.h_params.optimizer,metrics=self.metrics)
+			 self.gpu_model = gpu_model
+		else:
+			model.compile(loss=self.loss,loss_weights=self.loss_weights,optimizer=self.h_params.optimizer,metrics=self.metrics)
 		self.model = model
 
 class Cap2Cap(Cap2):
@@ -99,7 +112,7 @@ class Cap2Cap(Cap2):
 	loss_weights=None
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
-		model_type = 'cap2cap'
+		self.model_type = 'cap2cap'
 
 	def _decoder(self, initial_state):
 		decoder_input = Input(shape=(self.h_params.max_seq_length,),dtype='int32', name='decoder_input')
@@ -151,7 +164,6 @@ class Cap2All(Cap2Cap, Cap2Img):
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
 		self.model_type = 'cap2all'
-		#print(self.loss)
 
 	def _build(self):
 		encoder_input, encoder_output, encoder_out_cell = self._encoder()
@@ -168,8 +180,7 @@ class Vae2All(Cap2Cap, Cap2Img):
 	def __init__(self, h_params, **kwds):
 		super().__init__(h_params, **kwds)
 		self.model_type = 'vae2all'
-		#print(self.loss)
-	
+
 	def _variational(self, x):
 		z_mu = Dense(self.h_params.hidden_dim)(x)
 		z_log_var = Dense(self.h_params.hidden_dim)(x)
@@ -179,12 +190,31 @@ class Vae2All(Cap2Cap, Cap2Img):
 		eps = Input(tensor=K.random_normal(shape=(K.shape(x)[0],
 		                                          self.h_params.hidden_dim)))
 		z_eps = Multiply()([z_sigma, eps])
-		z = Add()([z_mu, z_eps])
+		z = Add(name=self.encoder_output)([z_mu, z_eps])
 		return z, eps
 
-	def _build(self):
-		encoder_input, encoder_output, encoder_out_cell = self._encoder()
+	def _encoder(self):
+		## Encoder ##
+		encoder_input = Input(shape=(self.h_params.max_seq_length,),dtype='int32', name=self.encoder_input)
+		#x = Masking(mask_value=0)(encoder_input)
+		glove_embedding_encoder = Embedding(self.h_params.num_embeddings, self.h_params.embed_dim, weights=[self.embedding_matrix], 
+						input_length=self.h_params.max_seq_length, 
+						trainable=False , mask_zero=True, name='GloVe_embedding_encoder')
+		x = glove_embedding_encoder(encoder_input)
+		x = Dense(self.h_params.embed_dim)(x)
+		f_out, b_out, f_state_h, f_state_c, b_state_h, b_state_c = Bidirectional(LSTM(self.h_params.hidden_dim, 
+																				dropout=self.h_params.dropout, 
+																				recurrent_dropout=self.h_params.dropout, 
+																				return_state=True), merge_mode=None, name='encoder')(x)
+		encoder_out = Maximum(name='lstm_output')([f_state_h, b_state_h])
+		encoder_out_cell = Maximum()([f_state_c, b_state_c])
+
 		z, eps = self._variational(encoder_output)
+
+		return encoder_input, encoder_out, encoder_out_cell, z, eps
+
+	def _build(self):
+		encoder_input, encoder_output, encoder_out_cell, z, eps = self._encoder()
 		projection_output = self._projection(z)
 		decoder_input, decoder_output = self._decoder([z, encoder_out_cell])
 		inputs = [encoder_input, decoder_input, eps]
