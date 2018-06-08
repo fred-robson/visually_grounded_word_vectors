@@ -147,6 +147,7 @@ class HPSearcher(object):
                     else:
                         data = get_data(self.model, self.data_helper)
                         val_data = get_data(self.model, self.val_helper)
+
                         # _, X, Y1, Y2 = self.data_helper.cap2cap()
                         # if self.max_samples is not None:
                         #     X, Y1, Y2, = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples]

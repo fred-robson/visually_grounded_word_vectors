@@ -44,8 +44,8 @@ class Metrics(Callback):
         if isinstance(self.validation_data, keras.utils.Sequence): 
             preds = self.model.predict_generator(self.validation_data, verbose=1, workers=4)
         else:
-            if isinstance(self.validation_data, tuple):
-                preds = self.model.predict([self.validation_data[0], self.validation_data[1]], verbose=1, workers=4)
+            if isinstance(self.validation_data, list):
+                preds = self.model.predict([self.validation_data[0], self.validation_data[1]], verbose=1)
         for item in list(preds):
             if len(item.shape) == 3:
                 val_predict = (np.asarray(item))
@@ -54,6 +54,8 @@ class Metrics(Callback):
         val_targ=None
         if isinstance(self.validation_data, keras.utils.Sequence):
             validation_data = unpack_generator(self.validation_data)
+        else:
+            validation_data = self.validation_data
         for item in validation_data:
             if len(item.shape)==3:
                 val_targ = item[:,:,0]
