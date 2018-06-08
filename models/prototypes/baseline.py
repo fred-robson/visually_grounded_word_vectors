@@ -99,9 +99,10 @@ class Cap2(object):
 			model = Model(inputs=inputs, outputs=outputs)
 			model.name = self.model_type
 		if num_gpu > 0:
-			 gpu_model = keras.utils.multi_gpu_model(model, gpus=num_gpu)
-			 gpu_model.compile(loss=self.loss,loss_weights=self.loss_weights,optimizer=self.h_params.optimizer,metrics=self.metrics)
-			 self.gpu_model = gpu_model
+			print("made_it")
+			gpu_model = keras.utils.multi_gpu_model(model, gpus=num_gpu)
+			gpu_model.compile(loss=self.loss,loss_weights=self.loss_weights,optimizer=self.h_params.optimizer,metrics=self.metrics)
+			self.gpu_model = gpu_model
 		else:
 			model.compile(loss=self.loss,loss_weights=self.loss_weights,optimizer=self.h_params.optimizer,metrics=self.metrics)
 		self.model = model
