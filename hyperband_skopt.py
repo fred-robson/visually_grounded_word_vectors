@@ -205,6 +205,7 @@ class HPSearcher(object):
                                         epochs=self.epochs,
                                         validation_data=val_data,
                                         callbacks=callbacks,
+                                        batch_size=32
                                         )
 
 
