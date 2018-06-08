@@ -567,7 +567,7 @@ def get_data(model_type, data_helper, gen=False):
 				limit = v.shape[0] - v.shape[0]%32
 				d[k] = v[:limit]
 			new_data.append(d)
-		data = new_data
+		data = tuple(new_data)
 
 	return data
 
