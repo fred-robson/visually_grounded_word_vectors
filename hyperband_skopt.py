@@ -28,6 +28,7 @@ from models.prototypes.baseline import Cap2Cap, Cap2Img, Cap2All, Vae2All, get_m
 from tensorflow.contrib.training import HParams
 from skopt.utils import use_named_args
 from datetime import datetime
+from tqdm import tqdm
 
 
 def _log_dir_name(learning_rate, model):

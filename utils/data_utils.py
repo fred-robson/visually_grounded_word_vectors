@@ -29,7 +29,7 @@ class CaptionsSuper():
 		self.WV = None
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
 
-	def split_train_val(self,percent_train=0.7):
+	def split_train_val(self,percent_train=0.9):
 		train = copy.deepcopy(self)
 		train_data = {}
 		val = copy.deepcopy(self)
@@ -98,6 +98,18 @@ class CaptionsSuper():
 		for captions,_ in self.get_all_captions():
 			lengths += [len(c) for c in captions]
 		return max(lengths)
+
+	def get_captions_np(self):
+		if self.WV is None: raise "Call initialize_WV() first"
+		captions_np = []
+		image_ids = []
+		for captions,image_id in self.get_all_captions():
+			for c in captions:
+				x = self.WV.words_to_indices(c)
+				x = self.pad_sequences(x)
+				captions_np.append(x)
+				image_ids.append(image_id)
+		return np.array(captions_np),image_ids
 
 	###############
 	# Image Stuff #
@@ -233,7 +245,7 @@ class CaptionsSuper():
 		return dict(batch_x),dict(batch_y)
 
 
-	def cap2resnet(self,batch_size=10):
+	def cap2resnet(self,batch_size=8):
 		if self.WV is None: raise "Call initialize_WV() first" 
 		list_image_ids = self.get_all_image_ids()
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x),batch_size)
@@ -469,6 +481,7 @@ def test_CocoCaptions():
 
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
+	print(Captions.get_captions_np())
 	print("Caption: Combined",Captions.max_caption_len)
 
 
