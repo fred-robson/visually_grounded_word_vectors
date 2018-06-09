@@ -122,6 +122,7 @@ class HPSearcher(object):
                                 batch_size=1024,
                                 validation_split=0.2,
                                 validation_data=validation_data,
+                                verbose=1,
                                 callbacks=[callback_log]+self.custom_metrics)
             else:
                 if self.model[:4] == "cap2" or self.model[:4] == "vae2" :
@@ -197,6 +198,7 @@ class HPSearcher(object):
                         history = model_to_run.fit_generator(data,
                                     epochs=self.epochs,
                                     validation_data=val_data,
+                                    validation_steps=len(val_data),
                                     callbacks=callbacks,
                                     workers=4,
                                     use_multiprocessing=True

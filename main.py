@@ -105,6 +105,7 @@ def encode(args):
                 history = model.model.fit_generator(data,
                             epochs=self.epochs,
                             validation_data=val_data,
+                            val_steps = len(val_data),
                             callbacks=callbacks,
                             )
             elif isinstance(data, tuple):
