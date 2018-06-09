@@ -29,7 +29,7 @@ class CaptionsSuper():
 		self.WV = None
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
 
-	def split_train_val(self,percent_train=0.99):
+	def split_train_val(self,percent_train=0.7):
 		train = copy.deepcopy(self)
 		train_data = {}
 		val = copy.deepcopy(self)

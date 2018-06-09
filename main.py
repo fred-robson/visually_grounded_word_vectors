@@ -41,7 +41,7 @@ def hp_search(args):
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
 
-    Captions,ValCaptions = Captions.split_train_val()
+    Captions,ValCaptions = Captions.split_train_val(args.train_val_split)
     print("Train Len",len(Captions))
     print("Val Len",len(ValCaptions))
 
@@ -310,6 +310,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--encode',help='whether to simply encode captions', action='store_true')
     parser.add_argument('--gpu', help='whether to use gpu or cpu', type=int, default=0)
     parser.add_argument('--batch_size', help='batch_size', type=int, default=32)
+    parser.add_argument('--train_val_split',help='determine percent train [0,1]',type=float,default=0.7)
 
 
     args = parser.parse_args()
