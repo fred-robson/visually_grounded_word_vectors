@@ -107,16 +107,10 @@ def encode(args):
             if isinstance(data, keras.utils.Sequence):
                 preds = encoder.predict_generator(data,
                             epochs=self.epochs,
-                            validation_data=val_data,
-                            val_steps = len(val_data),
-                            callbacks=callbacks,
                             )
             elif isinstance(data, tuple):
                 preds = encoder.predict(x=data[0],
                                 y=data[1],
-                                epochs=self.epochs,
-                                validation_data=val_data,
-                                callbacks=callbacks,
                                 )
 
 
