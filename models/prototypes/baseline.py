@@ -93,10 +93,9 @@ class Cap2(object):
 	def load_model(self, path):
 		self.model = keras.models.load_model(path)
 
-	def encode(self):
+	def get_encoder(self):
 		encoder = self._encoder_model()
-		preds = encoder.predict()
-		return preds
+		return encoder
 
 	def compile(self, num_gpu=0):
 		inputs, outputs = self._build()

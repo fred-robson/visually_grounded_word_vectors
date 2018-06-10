@@ -100,16 +100,19 @@ def encode(args):
                 model.load_model(self.path_load_model)
             
             model.compile()
+
+            encoder = model.get_encoder()
+
             
             if isinstance(data, keras.utils.Sequence):
-                history = model.model.fit_generator(data,
+                preds = encoder.predict_generator(data,
                             epochs=self.epochs,
                             validation_data=val_data,
                             val_steps = len(val_data),
                             callbacks=callbacks,
                             )
             elif isinstance(data, tuple):
-                history = model.model.fit(x=data[0],
+                preds = encoder.predict(x=data[0],
                                 y=data[1],
                                 epochs=self.epochs,
                                 validation_data=val_data,
