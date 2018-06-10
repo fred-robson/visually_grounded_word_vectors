@@ -81,7 +81,6 @@ class Metrics(Callback):
 			#Get predicted models from @batch of the dataset
 			val_predict_batch = None
 			for item in list(batch_preds):
-				print(item.shape)
 				if len(item.shape) == 3:
 					val_predict_batch = (np.asarray(item))
 					break
