@@ -29,7 +29,7 @@ class CaptionsSuper():
 		self.WV = None
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
 
-	def split_train_val(self,percent_train=0.9):
+	def split_train_val(self,percent_train=0.7):
 		train = copy.deepcopy(self)
 		train_data = {}
 		val = copy.deepcopy(self)
@@ -42,6 +42,9 @@ class CaptionsSuper():
 		train.data = train_data
 		val.data = val_data
 		return train,val
+
+	def __len__(self):
+		return len(self.data)
 
 
 
@@ -486,15 +489,11 @@ def test_CocoCaptions():
 
 
 	train,val = Captions.split_train_val()
-	print("Caption: Train",train.max_caption_len)
-	print(isinstance(train.cap2resnet(),keras.utils.Sequence))
-	print("Caption: Val",val.max_caption_len)
-	print(isinstance(val.cap2resnet(),keras.utils.Sequence))
-	
+	print(len(train))
+	print(len(val))
+	quit()
 	for Captions in [Captions]:
 
-		ret = Captions.get_negative_samples([('1355','tiny'), ('78','tiny')])
-		print(ret.shape)
 
 		print("**************")
 		print("   cap2cap    ")

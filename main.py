@@ -41,9 +41,9 @@ def hp_search(args):
     WV = FilteredGloveVectors()
     Captions.initialize_WV(WV)
 
-    Captions,ValCaptions = Captions.split_train_val()
-    print("Caption: Train",Captions.max_caption_len)
-    print("Caption: Val",ValCaptions.max_caption_len)
+    Captions,ValCaptions = Captions.split_train_val(args.train_val_split)
+    print("Train Len",len(Captions))
+    print("Val Len",len(ValCaptions))
 
     embedding_matrix = WV.get_embedding_matrix()
     metrics = Metrics()
@@ -105,6 +105,7 @@ def encode(args):
                 history = model.model.fit_generator(data,
                             epochs=self.epochs,
                             validation_data=val_data,
+                            val_steps = len(val_data),
                             callbacks=callbacks,
                             )
             elif isinstance(data, tuple):
@@ -275,6 +276,8 @@ def main(args):
     # non-reproducible results.
     # For further details, see: https://stackoverflow.com/questions/42022950/which-seeds-have-to-be-set-where-to-realize-100-reproducibility-of-training-res
     session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+    config.gpu_options.per_process_gpu_memory_fraction = 0.9 # maximun alloc gpu50% of MEM
+    config.gpu_options.allow_growth = True #allocate dynamically
 
     from keras import backend as K
     # The below tf.set_random_seed() will make random number generation
@@ -310,6 +313,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--encode',help='whether to simply encode captions', action='store_true')
     parser.add_argument('--gpu', help='whether to use gpu or cpu', type=int, default=0)
     parser.add_argument('--batch_size', help='batch_size', type=int, default=32)
+    parser.add_argument('--train_val_split',help='determine percent train [0,1]',type=float,default=0.7)
 
 
     args = parser.parse_args()
