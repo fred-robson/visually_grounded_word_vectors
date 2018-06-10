@@ -276,6 +276,8 @@ def main(args):
     # non-reproducible results.
     # For further details, see: https://stackoverflow.com/questions/42022950/which-seeds-have-to-be-set-where-to-realize-100-reproducibility-of-training-res
     session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+    config.gpu_options.per_process_gpu_memory_fraction = 0.9 # maximun alloc gpu50% of MEM
+    config.gpu_options.allow_growth = True #allocate dynamically
 
     from keras import backend as K
     # The below tf.set_random_seed() will make random number generation
