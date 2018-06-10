@@ -57,7 +57,7 @@ class HPSearcher(object):
         self.path_best_model = path_best_model
         self.path_load_model = path_load_model
         self.max_samples = max_samples
-        self.epochs=1
+        self.epochs=epochs
         self.gen = gen
         self.gpu = gpu
         self.batch_size = batch_size
