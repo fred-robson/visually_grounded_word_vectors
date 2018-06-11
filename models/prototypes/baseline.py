@@ -188,16 +188,25 @@ class Vae2All(Cap2Cap, Cap2Img):
 		self.model_type = 'vae2all'
 
 	def _variational(self, x):
-		z_mu = Dense(self.h_params.hidden_dim)(x)
-		z_log_var = Dense(self.h_params.hidden_dim)(x)
+		z_mu = Dense(self.h_params.hidden_dim, name='mean')(x)
+		z_log_var = Dense(self.h_params.hidden_dim, name='variance')(x)
 
 		z_mu, z_log_var = KLDivergenceLayer(name='KL_divergence')([z_mu, z_log_var])
 		z_sigma = Lambda(lambda t: K.exp(.5*t))(z_log_var)
 		eps = Input(tensor=K.random_normal(shape=(K.shape(x)[0],
-		                                          self.h_params.hidden_dim)))
+		                                          self.h_params.hidden_dim)), name='epsilon')
 		z_eps = Multiply()([z_sigma, eps])
 		z = Add(name=self.encoder_output)([z_mu, z_eps])
 		return z, eps
+
+	def _encoder_model(self):
+		input_layer_1 = self.model.get_layer(name=self.encoder_input).input
+		input_layer_2 = self.model.get_layer(name='epsilon').input
+		output_layer = self.model.get_layer(name=self.encoder_output).output
+		mean = self.model.get_layer(name='mean').output
+		variance = self.model.get_layer(name='variance').output
+		model = Model(inputs=[input_layer_1, input_layer_2], outputs=[output_layer, mean, variance])
+		return model
 
 	def _encoder(self):
 		## Encoder ##
@@ -225,7 +234,7 @@ class Vae2All(Cap2Cap, Cap2Img):
 		projection_output_2 = self._projection(projection_output)
 		decoder_input, decoder_output = self._decoder([z, encoder_out_cell])
 		inputs = [encoder_input, decoder_input, eps]
-		outputs = [projection_output, decoder_output]
+		outputs = [projection_output_2, decoder_output]
 		return inputs, outputs
 
 
@@ -249,6 +258,7 @@ if __name__ == '__main__':
 						latent_dim=1000)
 	cap2 = Vae2All(hparams, embeddings=embedding_matrix)
 	cap2.compile()
+	cap2.visualize()
 	encoder = cap2.get_encoder()
 	path = './models/visualization/{0}.png'.format('encoder')
 	plot_model(encoder, to_file=path)
