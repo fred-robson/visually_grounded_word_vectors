@@ -580,8 +580,7 @@ def test_FlickCaptions():
 		quit()
 
 def testSkipThought():
-	import skipthoughts
-
+	#import skipthoughts
 	#model = skipthoughts.load_model()
 	#encoder = skipthoughts.Encoder(model)
 	Captions = CocoCaptions(3)
