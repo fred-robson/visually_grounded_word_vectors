@@ -5,8 +5,10 @@ import keras
 import os
 os.environ['KERAS_BACKEND'] = 'tensorflow'
 import argparse
+from models.prototypes.baseline import get_model
 from keras.callbacks import TensorBoard
 from utils.data_utils import CocoCaptions
+from utils.data_utils import get_data
 from utils.word_vec_utils import GloVeVectors
 from utils.word_vec_utils import FilteredGloveVectors
 from models.metrics import Metrics
@@ -21,6 +23,7 @@ from keras.layers import LSTM
 from keras.layers import Dense
 from keras.layers import TimeDistributed
 from keras.layers import Embedding
+
 
 def log_dir_name(learning_rate, model, run_type, dataset):
 
@@ -66,13 +69,13 @@ def encode(args):
 
     Captions = CocoCaptions(args.data,args.max_samples)
     WV = FilteredGloveVectors()
+    Captions.initialize_WV(WV)
     embedding_matrix = WV.get_embedding_matrix()
 
-    if args.model[:4] == "cap2" or self.model[:4] == "vae2" :
+    if args.model[:4] == "cap2" or args.model[:4] == "vae2" :
             inputs, outputs = None, None
             datagen, valgen = None, None
             cap2 = None
-            callbacks = [callback_log]
 
             hparams = HParams(learning_rate=args.learning_rate, hidden_dim=1024,
                         optimizer='adam', dropout= 0.5, 
@@ -83,21 +86,16 @@ def encode(args):
                         latent_dim=1000)
 
             if args.gen == 'train' or args.gen == 'all':
-                data = get_data(self.model, self.data_helper, gen=True)
-                if args.gen == 'all':
-                    val_data = get_data(args.model, args.val_helper, gen=True)
-                else:
-                    val_data = get_data(args.model, args.val_helper)
+                data = get_data(args.model, Captions, gen=True)
             else:
-                data = get_data(self.model, self.data_helper)
-                val_data = get_data(self.model, self.val_helper)
+                data = get_data(args.model, Captions)
 
-            ModelClass = get_model(self.model)
-            model = ModelClass(hparams, embeddings=self.embedding_matrix)
+            ModelClass = get_model(args.model)
+            model = ModelClass(hparams, embeddings=embedding_matrix)
             
             if args.load is not None:
-                print("Loading model "+self.path_load_model+" ...")
-                model.load_model(self.path_load_model)
+                print("Loading model "+args.load+" ...")
+                model.load_model(args.load)
             
             model.compile()
 
@@ -105,13 +103,12 @@ def encode(args):
 
             
             if isinstance(data, keras.utils.Sequence):
-                preds = encoder.predict_generator(data,
-                            epochs=self.epochs,
-                            )
+                preds = encoder.predict_generator(data)
             elif isinstance(data, tuple):
                 preds = encoder.predict(x=data[0],
                                 y=data[1],
                                 )
+            print(preds)
 
 
 
