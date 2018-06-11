@@ -163,6 +163,16 @@ class CaptionsSuper():
 	########
 	# Misc #
 	########
+	#(caption, resnet output, skipthought vector)
+	def get_skipthought_data(self):
+		c = list(self.get_all_captions())
+		result = list()
+		for captions,image_id in c:
+			resnet_output = self.get_resnet_output(image_id)
+			for cap in captions:
+				sentence = " ".join(cap)
+				result.append([sentence,resnet_output])
+		pkl.dump(result, open("coco_split.p", "wb" ), 2)
 
 	def num_images(self):
 		return len(self.data)
@@ -198,9 +208,12 @@ class CaptionsSuper():
 		return X,Y
 
 	def get_captions_list(self):
-		caps = self.get_all_captions()
-		captions = [cap[0] for cap in caps]
-		return captions
+		captions = self.get_all_captions()
+		c = list()
+		for cap in captions:
+			cs = [" ".join(c) for c in cap[0]]
+			c.extend(cs)
+		return c
 
 	def get_cap2cap_batch(self,list_image_ids):
 		#yield({“encoder_input:” X, “decoder_input”: Y1}, {“decoder_output”:Y2})
@@ -490,6 +503,13 @@ class FlickrCaptions(CaptionsSuper):
 def test_CocoCaptions():
 
 	Captions = CocoCaptions(3)
+	#caps = Captions.get_captions_list()
+	#import pickle 
+	#pickle.dump(caps, open("coco_caps.p", "wb" ), 2)
+	#quit()
+	for a,b in Captions.get_all_captions():
+		print(a,b)
+		quit()
 	print(len(Captions.get_all_image_ids()))
 
 	WV = CaptionGloveVectors()
@@ -562,6 +582,14 @@ def test_FlickCaptions():
 		print(a,b)
 		quit()
 
+def testSkipThought():
+	import skipthoughts
+
+	#model = skipthoughts.load_model()
+	#encoder = skipthoughts.Encoder(model)
+	Captions = CocoCaptions(3)
+	Captions.get_skipthought_data()
+
 def get_data(model_type, data_helper, gen=False):
 	gen_dict={'cap2cap':data_helper.cap2cap, 'cap2img':data_helper.cap2resnet, 'cap2all':data_helper.cap2all, 'vae2all':data_helper.cap2all}
 	data_dict={'cap2cap':data_helper.cap2cap_complete, 'cap2img':data_helper.cap2resnet_complete, 'cap2all':data_helper.cap2all_complete, 'vae2all':data_helper.cap2all_complete}
@@ -581,8 +609,8 @@ def get_data(model_type, data_helper, gen=False):
 	return data
 
 if __name__ == "__main__":
+	#testSkipThought()
 	#test_FlickCaptions()
+	#test_CocoCaptions()
+	#testSkipThought()
 	test_CocoCaptions()
-	
-	
-
