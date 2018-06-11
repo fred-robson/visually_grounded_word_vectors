@@ -16,7 +16,7 @@ from scipy.linalg import norm
 from nltk.tokenize import word_tokenize
 
 profile = False
-base_fp = os.path.dirname(os.path.abspath(__file__))+"/../"
+base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
 sys.path.insert(0, base_fp) #allows word_vec_utils to be imported
 #-----------------------------------------------------------------------------#
 # Specify model and table locations here
