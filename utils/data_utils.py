@@ -583,7 +583,7 @@ def testSkipThought():
 	#import skipthoughts
 	#model = skipthoughts.load_model()
 	#encoder = skipthoughts.Encoder(model)
-	Captions = CocoCaptions(3)
+	Captions = CocoCaptions(0)
 	Captions.get_skipthought_data()
 
 def get_data(model_type, data_helper, gen=False):
