@@ -12,7 +12,7 @@ import pickle as pkl
 import numpy as np
 from word_vec_utils import GloVeVectors,CaptionGloveVectors,pad,unk
 from keras.preprocessing.sequence import pad_sequences
-
+import pickle
 
 class CaptionsSuper():
 
@@ -124,6 +124,16 @@ class CaptionsSuper():
 	########
 	# Misc #
 	########
+	#(caption, resnet output, skipthought vector)
+	def get_skipthought_data(self):
+		c = list(self.get_all_captions())
+		result = list()
+		for captions,image_id in c:
+			resnet_output = self.get_resnet_output(image_id)
+			for cap in captions:
+				sentence = " ".join(cap)
+				result.append([sentence,resnet_output])
+		pickle.dump(result, open("coco_split.p", "wb" ), 2)
 
 	def num_images(self):
 		return len(self.data)
@@ -159,9 +169,12 @@ class CaptionsSuper():
 		return X,Y
 
 	def get_captions_list(self):
-		caps = self.get_all_captions()
-		captions = [cap[0] for cap in caps]
-		return captions
+		captions = self.get_all_captions()
+		c = list()
+		for cap in captions:
+			cs = [" ".join(c) for c in cap[0]]
+			c.extend(cs)
+		return c
 
 
 	def cap2cap(self):
@@ -396,6 +409,10 @@ class FlickrCaptions(CaptionsSuper):
 def test_CocoCaptions():
 
 	Captions = CocoCaptions(3)
+	#caps = Captions.get_captions_list()
+	#import pickle 
+	#pickle.dump(caps, open("coco_caps.p", "wb" ), 2)
+	#quit()
 	for a,b in Captions.get_all_captions():
 		print(a,b)
 		quit()
@@ -426,10 +443,18 @@ def test_FlickCaptions():
 		print(a,b)
 		quit()
 
+def testSkipThought():
+	import skipthoughts
 
+	#model = skipthoughts.load_model()
+	#encoder = skipthoughts.Encoder(model)
+	Captions = CocoCaptions(3)
+	Captions.get_skipthought_data()
 
 if __name__ == "__main__":
+	#testSkipThought()
 	#test_FlickCaptions()
-	test_CocoCaptions()
-	
+	#test_CocoCaptions()
+	print("not testing anything")
+	#testSkipThought()
 
