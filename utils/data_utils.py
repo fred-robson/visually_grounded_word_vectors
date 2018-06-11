@@ -168,7 +168,6 @@ class CaptionsSuper():
 		c = list(self.get_all_captions())
 		result = list()
 		for captions,image_id in tqdm(c):
-			print(image_id)
 			resnet_output = self.get_resnet_output(image_id)
 			for cap in captions:
 				sentence = " ".join(cap)
