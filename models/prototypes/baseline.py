@@ -63,8 +63,8 @@ class Cap2(object):
 		self.gpu_model = None
 
 	def _encoder_model(self):
-		input_layer = self.model.get_layer(name=self.encoder_input)
-		output_layer = self.model.get_layer(name=self.encoder_output)
+		input_layer = self.model.get_layer(name=self.encoder_input).input
+		output_layer = self.model.get_layer(name=self.encoder_output).output
 		model = Model(inputs=input_layer, outputs=output_layer)
 		return model
 
@@ -149,15 +149,15 @@ class Cap2Img(Cap2):
 		super().__init__(h_params, **kwds)
 		self.model_type = 'cap2img'
 
-	def _projection(self, x):
-		projection_output = Dense(self.h_params.latent_dim,activation=self.h_params.activation, name='projection_output')(x)
+	def _projection(self, x, name='projection_output'):
+		projection_output = Dense(self.h_params.latent_dim,activation=self.h_params.activation, name=name)(x)
 		return projection_output
-
 	def _build(self):
 		encoder_input, encoder_output, encoder_out_cell = self._encoder()
 		inputs = [encoder_input]
-		projection_output = self._projection(encoder_output)
-		outputs = [projection_output]
+		projection_output = self._projection(encoder_output, name='projection_1')
+		projection_output_2 = self._projection(projection_output)
+		outputs = [projection_output_2]
 		return inputs, outputs
 
 
@@ -172,10 +172,11 @@ class Cap2All(Cap2Cap, Cap2Img):
 
 	def _build(self):
 		encoder_input, encoder_output, encoder_out_cell = self._encoder()
-		projection_output = self._projection(encoder_output)
+		projection_output = self._projection(encoder_output, name='projection_1')
+		projection_output_2 = self._projection(projection_output)
 		decoder_input, decoder_output = self._decoder([encoder_output, encoder_out_cell])
 		inputs = [encoder_input, decoder_input]
-		outputs = [projection_output, decoder_output]
+		outputs = [projection_output_2, decoder_output]
 		return inputs, outputs
 
 class Vae2All(Cap2Cap, Cap2Img):
@@ -214,13 +215,14 @@ class Vae2All(Cap2Cap, Cap2Img):
 		encoder_out = Maximum(name='lstm_output')([f_state_h, b_state_h])
 		encoder_out_cell = Maximum()([f_state_c, b_state_c])
 
-		z, eps = self._variational(encoder_output)
+		z, eps = self._variational(encoder_out)
 
 		return encoder_input, encoder_out, encoder_out_cell, z, eps
 
 	def _build(self):
 		encoder_input, encoder_output, encoder_out_cell, z, eps = self._encoder()
-		projection_output = self._projection(z)
+		projection_output = self._projection(z, name='projection_1')
+		projection_output_2 = self._projection(projection_output)
 		decoder_input, decoder_output = self._decoder([z, encoder_out_cell])
 		inputs = [encoder_input, decoder_input, eps]
 		outputs = [projection_output, decoder_output]
@@ -247,5 +249,7 @@ if __name__ == '__main__':
 						latent_dim=1000)
 	cap2 = Vae2All(hparams, embeddings=embedding_matrix)
 	cap2.compile()
-	cap2.visualize()
+	encoder = cap2.get_encoder()
+	path = './models/visualization/{0}.png'.format('encoder')
+	plot_model(encoder, to_file=path)
 
