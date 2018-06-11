@@ -609,8 +609,8 @@ def get_data(model_type, data_helper, gen=False):
 	return data
 
 if __name__ == "__main__":
-	#testSkipThought()
+	testSkipThought()
 	#test_FlickCaptions()
 	#test_CocoCaptions()
 	#testSkipThought()
-	test_CocoCaptions()
+	#test_CocoCaptions()
