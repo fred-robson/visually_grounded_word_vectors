@@ -102,6 +102,7 @@ class Metrics(Callback):
 			return val_predict
 
 		def get_val_predict_list(x_batched,y_batched):
+			raise "Still need to implement...."
 			val_predict = None
 			for i,(x_b,y_b) in tqdm(enumerate(zip(x_batched,y_batched)),desc="Forward propogating on data"):
 				if i==0: 
