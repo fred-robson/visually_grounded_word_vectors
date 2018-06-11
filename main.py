@@ -104,13 +104,16 @@ def encode(args):
             
             if isinstance(data, keras.utils.Sequence):
                 preds = encoder.predict_generator(data)
+            
             elif isinstance(data, tuple):
-                preds = encoder.predict(x=data[0],
-                                y=data[1],
-                                )
-            print(preds)
-
-
+                preds = encoder.predict(x=data[0])
+            
+            X = Captions.ordered_X[len(preds):]
+            
+            for (image_id,c),y in zip(X,preds):
+                print(image_id)
+                print(Captions.WV.indices_to_words(c))
+                print(y)
 
 
 def train(args):

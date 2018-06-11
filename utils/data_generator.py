@@ -6,7 +6,7 @@ import numpy as np
 
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
-    def __init__(self, image_ids, __data_generation, batch_size=32, shuffle=True):
+    def __init__(self, image_ids, __data_generation,batch_size=32, shuffle=True):
         'Initialization'
         self.batch_size = batch_size
         self.image_ids = image_ids
@@ -34,6 +34,7 @@ class DataGenerator(keras.utils.Sequence):
 
     def on_epoch_end(self):
         'Updates indexes after each epoch'
+        #self.Captions.ordered_X = []
         self.indexes = np.arange(len(self.image_ids))
         if self.shuffle == True:
             np.random.shuffle(self.indexes)
