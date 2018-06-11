@@ -167,7 +167,7 @@ class CaptionsSuper():
 	def get_skipthought_data(self):
 		c = list(self.get_all_captions())
 		result = list()
-		for captions,image_id in c:
+		for captions,image_id in tqdm(c):
 			resnet_output = self.get_resnet_output(image_id)
 			for cap in captions:
 				sentence = " ".join(cap)
