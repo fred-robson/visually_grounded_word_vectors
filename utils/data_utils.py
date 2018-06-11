@@ -276,7 +276,6 @@ class CaptionsSuper():
 		return self.get_cap2resnet_batch(list(self.data.keys()))
 
 	def get_cap2all_batch(self,list_image_ids):
-		#yield({“encoder_input:” X, “decoder_input”: Y1}, {“decoder_output”:Y2, “projection_output”:Y3})
 		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
 		for image_id in list_image_ids:
 			captions = self.get_captions(image_id)
