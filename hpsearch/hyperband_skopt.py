@@ -23,7 +23,7 @@ from skopt.plots import plot_convergence
 from skopt.plots import plot_objective, plot_evaluations
 from skopt.utils import use_named_args
 from models.metrics import Metrics
-from models.prototypes.baseline import Cap2
+from models.prototypes.baseline import Cap2Cap, Cap2Img, Cap2All
 from tensorflow.contrib.training import HParams
 from skopt.utils import use_named_args
 from datetime import datetime
@@ -42,7 +42,7 @@ def _log_dir_name(learning_rate, model):
 
 class HPSearcher(object):
 
-    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None):
+    def __init__(self, default_parameters, embedding_matrix, model, data_helper, path_best_model=None, path_load_model=None, custom_metrics=[], max_samples=None):
         self.default_parameters = default_parameters
         self.embedding_matrix = embedding_matrix
         self.model = model
@@ -50,8 +50,10 @@ class HPSearcher(object):
         self.best_f1 = 0.0
         if path_best_model is None:
             path_best_model = './models/saved/'+model+'_best_model.keras'
-        
+        self.custom_metrics = custom_metrics
         self.path_best_model = path_best_model
+        self.path_load_model = path_load_model
+        self.max_samples = max_samples
 
 
     def _search_space(self):
@@ -96,7 +98,8 @@ class HPSearcher(object):
             history = None
             validation_data=None
             # Create the neural network with these hyper-parameters.
-
+            #K.clear_session()
+            tf.reset_default_graph()
             if self.model == 'toy':
 
                 X = np.random.randint(0, 6, size=(3000,50))
@@ -106,69 +109,112 @@ class HPSearcher(object):
                 model.add(Embedding(6, 50, input_length=50))
                 model.add(Dense(300, activation='relu'))
                 model.add(Dense(6, activation='softmax'))
-                model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+                model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
                 history = model.fit(X,
                                 Y,
-                                epochs=3,
-                                batch_size=128,
+                                epochs=1,
+                                batch_size=1024,
                                 validation_split=0.2,
                                 validation_data=validation_data,
-                                callbacks=[callback_log])
+                                callbacks=[callback_log]+self.custom_metrics)
             else:
                 if self.model[:4] == "cap2":
                     inputs, outputs = None, None
+                    cap2 = None
+                    callbacks = [callback_log]
 
                     if self.model == 'cap2cap':
-                        X, Y1, Y2 = self.data_helper.cap2cap()
+                        _, X, Y1, Y2 = self.data_helper.cap2cap()
+                        if self.max_samples is not None:
+                            X, Y1, Y2, = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples]
                         Y2 = np.expand_dims(Y2, axis=2)
                         validation_data=None
                         inputs = {'encoder_input': X, 'decoder_input': Y1}
                         outputs = {'decoder_output': Y2}
-
-                    if self.model == 'cap2img':
-                        X, Y = self.data_helper.cap2img()
-                        inputs = {'encoder_input': X}
-                        outputs = {'resnet_output': Y}
-
-                    if self.model == 'cap2all':
-                        X, Y1, Y2, Y3 = self.data_helper.cap2all()
-                        inputs = {'encoder_input': X, 'decoder_input': Y1}
-                        outputs = {'resnet_output': Y3, 'decoder_output': Y2}
-
-                    hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
+                        hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
                                 optimizer='adam', dropout= 0.5, 
                                 max_seq_length=inputs['encoder_input'].shape[1],
                                 embed_dim=self.embedding_matrix.shape[-1],
-                                num_embeddings=self.embedding_matrix.shape[0])
-                    cap2 = Cap2(hparams, model_type=self.model, embeddings=self.embedding_matrix)
+                                num_embeddings=self.embedding_matrix.shape[0],
+                                activation='relu',
+                                latent_dim=1000)
+                        cap2 = Cap2Cap(hparams, embeddings=self.embedding_matrix)
+                        callbacks += self.custom_metrics
 
+                    if self.model == 'cap2img':
+                        _, X, Y = self.data_helper.cap2resnet()
+                        Y = Y[:,0,:]
+                        inputs = {'encoder_input': X}
+                        outputs = {'projection_output': Y}
+                        hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
+                                optimizer='adam', dropout= 0.5, 
+                                max_seq_length=inputs['encoder_input'].shape[1],
+                                embed_dim=self.embedding_matrix.shape[-1],
+                                num_embeddings=self.embedding_matrix.shape[0],
+                                activation='relu',
+                                latent_dim=1000)
+                        cap2 = Cap2Img(hparams, embeddings=self.embedding_matrix)
+
+                    if self.model == 'cap2all':
+                        _, X, Y1, Y2, Y3 = self.data_helper.cap2all()
+                        #X, Y1, Y2, Y3 = X[:20], Y1[:20], Y2[:20], Y3[:20]
+                        Y2 = np.expand_dims(Y2, axis=2)
+                        Y3 = Y3[:,0,:]
+                        if self.max_samples is not None:
+                            X, Y1, Y2, Y3 = X[:self.max_samples], Y1[:self.max_samples], Y2[:self.max_samples], Y3[:self.max_samples]
+                        inputs = {'encoder_input': X, 'decoder_input': Y1}
+                        outputs = {'projection_output': Y3, 'decoder_output': Y2}
+                        hparams = HParams(learning_rate=learning_rate, hidden_dim=1024,
+                                optimizer='adam', dropout= 0.5, 
+                                max_seq_length=inputs['encoder_input'].shape[1],
+                                embed_dim=self.embedding_matrix.shape[-1],
+                                num_embeddings=self.embedding_matrix.shape[0],
+                                activation='relu',
+                                latent_dim=1000)
+                        cap2 = Cap2All(hparams, embeddings=self.embedding_matrix)
+                        callbacks += self.custom_metrics
+                    if self.path_load_model is not None:
+                        print("Loading model "+self.path_load_model+" ...")
+                        cap2.load_model(self.path_load_model)
+                    
+                    cap2.compile()
                     model = cap2.model
                     history = model.fit(inputs,
                                     outputs,
                                     epochs=3,
+<<<<<<< HEAD
                                     batch_size=128,
+=======
+                                    batch_size=256,
+>>>>>>> cfe1b11529f85b9b3f67509b2c2b572705538067
                                     validation_split=0.2,
                                     validation_data=validation_data,
-                                    callbacks=[callback_log])
+                                    callbacks=callbacks)
 
 
             # Get the classification accuracy on the validation-set
             # after the last training-epoch.
-            
-            #f1 = mectrics.val_f1s[-1]
-            f1 = 1
+            if self.model != 'cap2img':
+                f1 = self.custom_metrics[0].val_f1s[-1]
+                print()
+                print("Val F1: {0:.2%}".format(f1))
+                print()
+            else:
+                f1 = history.history['val_acc'][-1]
+                print()
+                print("Val Acc: {0:.2%}".format(f1))
+                print()
 
             # Print the classification accuracy.
-            print()
-            print("F1: {0:.2%}".format(f1))
-            print()
+            
 
             # Save the model if it improves on the best-found performance.
             # We use the global keyword so we update the variable outside
             # of this function.
             # If the classification accuracy of the saved model is improved ...
-            
+            print(self.best_f1)
             if f1 > self.best_f1:
+                print("saving model at {0}".format(self.path_best_model))
                 # Save the new model to harddisk.
                 model.save(self.path_best_model)
                 # Update the classification accuracy.
@@ -191,7 +237,8 @@ class HPSearcher(object):
         search_result = gp_minimize(func=_fitness,
                     dimensions=self._search_space(),
                     acq_func='EI', # Expected Improvement.
-                    n_calls=40,
+                    n_calls=10,
+                    n_random_starts=4,
                     x0=self.default_parameters)
         return search_result
 

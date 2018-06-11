@@ -1,5 +1,5 @@
 #Classes and functions for accessing stuff from data files
-import json, os, sys
+import json, os, sys,random
 
 base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
 sys.path.insert(0, base_fp) #allows word_vec_utils to be imported
@@ -12,14 +12,40 @@ import pickle as pkl
 import numpy as np
 from word_vec_utils import GloVeVectors,CaptionGloveVectors,pad,unk
 from keras.preprocessing.sequence import pad_sequences
-import pickle
+from data_generator import DataGenerator
+import copy, random,keras
 
 class CaptionsSuper():
 
-	def __init__(self,data):
+	def __init__(self,data,limit=None):
 		self.data = data 
+		if not limit is None:
+			data = {}
+			for i,(k,v) in enumerate(self.data.items()):
+				if i == limit: break
+				data[k] = v
+			self.data = data
+
 		self.WV = None
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
+
+	def split_train_val(self,percent_train=0.7):
+		train = copy.deepcopy(self)
+		train_data = {}
+		val = copy.deepcopy(self)
+		val_data = {}
+		for k,v in self.data.items():
+			if random.random()<percent_train:
+				train_data[k] = v
+			else: 
+				val_data[k] = v
+		train.data = train_data
+		val.data = val_data
+		return train,val
+
+	def __len__(self):
+		return len(self.data)
+
 
 
 	#########################################
@@ -45,18 +71,17 @@ class CaptionsSuper():
 			vocab.add(v)
 		return vocab
 
+	def get_all_image_ids(self):
+		return list(self.data.keys())
+
 	def get_captions(self,image_id):
 		#Image id is of the form (id,source) eg (1423,"val")
 		return self.data[image_id]
 
 	def get_all_captions(self):
 		keys = list(self.data.keys())
-		i = 0
-		len_keys = len(keys)
-		while i < len_keys:
-			k = keys[i]
-			yield self.get_captions(k),k
-			i+=1
+		ret = [(self.get_captions(k),k) for k in keys]
+		return ret
 
 	def build_corpus(self):
 		'''
@@ -76,6 +101,18 @@ class CaptionsSuper():
 		for captions,_ in self.get_all_captions():
 			lengths += [len(c) for c in captions]
 		return max(lengths)
+
+	def get_captions_np(self):
+		if self.WV is None: raise "Call initialize_WV() first"
+		captions_np = []
+		image_ids = []
+		for captions,image_id in self.get_all_captions():
+			for c in captions:
+				x = self.WV.words_to_indices(c)
+				x = self.pad_sequences(x)
+				captions_np.append(x)
+				image_ids.append(image_id)
+		return np.array(captions_np),image_ids
 
 	###############
 	# Image Stuff #
@@ -133,7 +170,7 @@ class CaptionsSuper():
 			for cap in captions:
 				sentence = " ".join(cap)
 				result.append([sentence,resnet_output])
-		pickle.dump(result, open("coco_split.p", "wb" ), 2)
+		pkl.dump(result, open("coco_split.p", "wb" ), 2)
 
 	def num_images(self):
 		return len(self.data)
@@ -176,63 +213,112 @@ class CaptionsSuper():
 			c.extend(cs)
 		return c
 
+	def get_cap2cap_batch(self,list_image_ids):
+		#yield({“encoder_input:” X, “decoder_input”: Y1}, {“decoder_output”:Y2})
+		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
+		for image_id in list_image_ids:
+			captions = self.get_captions(image_id)
+			X_group, Y_group = self.get_caption_convolutions(captions)
+			for x,y in zip(X_group,Y_group):
+				batch_x["encoder_input"].append(self.pad_sequences(x))
+				batch_x["decoder_input"].append(self.pad_sequences(y[:-1]))
+				batch_y["decoder_output"].append(self.pad_sequences(y[1:]))
+				#IDs.append(image_id) TO DO LATER
+		for k,v in batch_x.items(): batch_x[k] = np.array(v)
+		for k,v in batch_y.items(): batch_y[k] = np.array(v)
+		batch_y['decoder_output'] = np.expand_dims(batch_y['decoder_output'], axis=2)
+		return dict(batch_x),dict(batch_y)
 
-	def cap2cap(self):
+
+	def cap2cap(self,batch_size=8):
 		'''
 		Returns X,Y where each x_i is a list of indices of a caption
 		and each y_i is a list of indices of a different caption 
 		corresponding to the same image
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
+		list_image_ids = self.get_all_image_ids()
+		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2cap_batch(x),batch_size)
+		return DG 
 
-		X,Y1,Y2 = [],[], []
+	def cap2cap_complete(self):
+		return self.get_cap2cap_batch(list(self.data.keys()))
 
-		for captions,image_id in self.get_all_captions():
-			X_batch, Y_batch = self.get_caption_convolutions(captions)
-			for x,y in zip(X_batch,Y_batch):
-				X.append(self.pad_sequences(x))
-				Y1.append(self.pad_sequences(y[:-1]))
-				Y2.append(self.pad_sequences(y[1:]))
-
-			
-		return np.array(X),np.array(Y1),np.array(Y2)
-
-	def cap2resnet(self):
-		if self.WV is None: raise "Call initialize_WV() first" 
-
-		X,Y = [],[]
-
-		for captions,image_id in self.get_all_captions():
+	def get_cap2resnet_batch(self,list_image_ids):
+		#yield({“encoder_input:” X}, {“projection_output”:Y})
+		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
+		for image_id in list_image_ids:
+			resnet = self.get_resnet_output(image_id)
+			captions = self.get_captions(image_id)
 			for c in captions:
 				x = self.WV.words_to_indices(c)
 				x = self.pad_sequences(x)
-				X.append(self.WV.words_to_indices(c))
-				Y.append(self.get_resnet_output(image_id))
+				batch_x["encoder_input"].append(x)
+				batch_y["projection_output"].append(resnet)
+		for k,v in batch_x.items(): batch_x[k] = np.array(v)
+		for k,v in batch_y.items(): batch_y[k] = np.array(v)
+		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
+		return dict(batch_x),dict(batch_y)
 
-		return np.array(X),np.array(Y)
 
-	def cap2all(self):
+	def cap2resnet(self,batch_size=8):
+		if self.WV is None: raise "Call initialize_WV() first" 
+		list_image_ids = self.get_all_image_ids()
+		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x),batch_size)
+		return DG 
 
-		if self.WV is None: raise "Call initialize_WV() first"
+	def cap2resnet_complete(self):
+		return self.get_cap2resnet_batch(list(self.data.keys()))
 
-		X,Y1,Y2,Y3 = [],[],[],[] #Y1,Y2 same as cap2cap, Y3 same as cap2resnet
-
-		for captions,image_id in self.get_all_captions():
-			X_batch, Y_batch = self.get_caption_convolutions(captions)
+	def get_cap2all_batch(self,list_image_ids):
+		#yield({“encoder_input:” X, “decoder_input”: Y1}, {“decoder_output”:Y2, “projection_output”:Y3})
+		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
+		for image_id in list_image_ids:
+			captions = self.get_captions(image_id)
 			resnet = self.get_resnet_output(image_id)
-			
-			for x,y in zip(X_batch,Y_batch):
-				X.append(self.pad_sequences(x))
-				Y1.append(self.pad_sequences(y[:-1]))
-				Y2.append(self.pad_sequences(y[1:]))
-				Y3.append(self.get_resnet_output(image_id))
+			X_group, Y_group = self.get_caption_convolutions(captions)
+			for x,y in zip(X_group,Y_group):
+				batch_x["encoder_input"].append(self.pad_sequences(x))
+				batch_x["decoder_input"].append(self.pad_sequences(y[:-1]))
+				Y2 = self.pad_sequences(y[1:])
+				Y2 = np.expand_dims(Y2, axis=2)
+				batch_y["decoder_output"].append(Y2)
+				batch_y["projection_output"].append(resnet)
+		for k,v in batch_x.items(): batch_x[k] = np.array(v)
+		for k,v in batch_y.items(): batch_y[k] = np.array(v)
+		#batch_y['decoder_output'] = np.expand_dims(batch_y['decoder_output'], axis=2)
+		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
+		return dict(batch_x),dict(batch_y)
 
-		return np.array(X),np.array(Y1),np.array(Y2),np.array(Y3)
+	def cap2all(self,batch_size=8):
+		if self.WV is None: raise "Call initialize_WV() first"
+		list_image_ids = self.get_all_image_ids()
+		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x),batch_size)
+		return DG 
+
+	def cap2all_complete(self):
+		return self.get_cap2all_batch(list(self.data.keys()))
+
+
+	def get_negative_samples(self,image_id_list,num_negative=5):
+
+		ret = []
+		
+		for image_id in image_id_list:
+			to_sample = set(self.data.keys())-{image_id}
+			negative_samples = []
+			for neg in random.sample(to_sample,num_negative):
+				negative_samples.append(self.get_resnet_output(neg).flatten())
+			ret.append(negative_samples)
+
+		return np.array(ret)
+
+
 
 
 class CocoCaptions(CaptionsSuper):
 
-	def __init__(self,data_type=3):
+	def __init__(self,data_type=3,limit=None):
 		'''
 		Data lets you know where to pull the captions from.
 			0 = train
@@ -241,7 +327,7 @@ class CocoCaptions(CaptionsSuper):
 			3 = tiny (Note that tiny is a subset of train)
 		'''
 		data = self.create_data(data_type) #{(image_id,source):[caption1,caption2,....]}
-		CaptionsSuper.__init__(self,data)
+		CaptionsSuper.__init__(self,data,limit)
 
 
 	##########
@@ -273,6 +359,8 @@ class CocoCaptions(CaptionsSuper):
 
 		data = defaultdict(lambda:[])
 		loaded_jsons = []
+
+		file_names = data_options[data_type]
 
 		for f in file_names: 
 			loaded_jsons=load_json(f)
@@ -321,7 +409,6 @@ class CocoCaptions(CaptionsSuper):
 							   }
 
 
-
 		image_num = image_id[0]
 		data_source = image_id[1]
 		file_path = image_locations[data_source]
@@ -332,7 +419,7 @@ class CocoCaptions(CaptionsSuper):
 
 class FlickrCaptions(CaptionsSuper):
 	
-	def __init__(self,data_type=1):
+	def __init__(self,data_type=1,limit=None):
 		'''
 		Data lets you know where to pull the captions from.
 			0 = train
@@ -342,7 +429,7 @@ class FlickrCaptions(CaptionsSuper):
 
 		'''
 		data = self.create_data(data_type) #{(image_id,source):[caption1,caption2,....]}
-		CaptionsSuper.__init__(self,data)
+		CaptionsSuper.__init__(self,data,limit)
 
 
 	##########
@@ -389,9 +476,6 @@ class FlickrCaptions(CaptionsSuper):
 
 		return data
 		
-		
-
-
 
 	###################
 	# Address Finders #
@@ -416,26 +500,71 @@ def test_CocoCaptions():
 	for a,b in Captions.get_all_captions():
 		print(a,b)
 		quit()
+	print(len(Captions.get_all_image_ids()))
 
 	WV = CaptionGloveVectors()
 	Captions.initialize_WV(WV)
-
-	X,Y1,Y2 = Captions.cap2cap()
-	for y1,y2 in zip(Y1,Y2):
-		print(Captions.WV.indices_to_words(y1,remove_padding=True))
-		print(Captions.WV.indices_to_words(y2,remove_padding=True))
+	print(Captions.get_captions_np())
+	print("Caption: Combined",Captions.max_caption_len)
 
 
-	X,Y = Captions.cap2resnet()
-	for x,y in zip(X,Y):
-		print(Captions.WV.indices_to_words(x,remove_padding=False))
-		print(y)
+	train,val = Captions.split_train_val()
+	print(len(train))
+	print(len(val))
+	quit()
+	for Captions in [Captions]:
 
-	X,Y1,Y2,Y3 = Captions.cap2all()
-	print(Y1)
-	for x,y in zip(X,Y1):
-		print(Captions.WV.indices_to_words(x,remove_padding=False))
-		print(Captions.WV.indices_to_words(y,remove_padding=False))
+
+		print("**************")
+		print("   cap2cap    ")
+		print("**************")
+		
+		print("batch")
+		for i,(X,Y) in tqdm(enumerate(Captions.cap2cap())):
+			if i == 0: 
+				for k,v in X.items(): print(k,v.shape)
+				for k,v in Y.items(): print(k,v.shape)
+			if i == 6: break
+
+		print("complete")
+		X,Y = Captions.cap2cap_complete()
+		for k,v in X.items(): print(k,v.shape)
+		for k,v in Y.items(): print(k,v.shape)
+
+		print("*****************")
+		print("   cap2resnet    ")
+		print("*****************")
+
+		print("batch")
+		for i,(X,Y) in tqdm(enumerate(Captions.cap2resnet())):
+			if i == 0: 
+				for k,v in X.items(): print(k,v.shape)
+				for k,v in Y.items(): print(k,v.shape)
+			if i == 6: break
+
+		print("complete")
+
+		X,Y = Captions.cap2resnet_complete()
+		for k,v in X.items(): print(k,v.shape)
+		for k,v in Y.items(): print(k,v.shape)
+
+		
+		print("*****************")
+		print("     cap2all     ")
+		print("*****************")
+
+		print("batch")
+		for i,(X,Y) in tqdm(enumerate(Captions.cap2all())):
+			if i == 0: 
+				for k,v in X.items(): print(k,v.shape)
+				for k,v in Y.items(): print(k,v.shape)
+			if i == 6: break
+
+		print("complete")
+		X,Y = Captions.cap2all_complete()
+		for k,v in X.items(): print(k,v.shape)
+		for k,v in Y.items(): print(k,v.shape)
+
 
 def test_FlickCaptions():
 	Flickr = FlickrCaptions(3)
@@ -451,10 +580,27 @@ def testSkipThought():
 	Captions = CocoCaptions(3)
 	Captions.get_skipthought_data()
 
+def get_data(model_type, data_helper, gen=False):
+	gen_dict={'cap2cap':data_helper.cap2cap, 'cap2img':data_helper.cap2resnet, 'cap2all':data_helper.cap2all, 'vae2all':data_helper.cap2all}
+	data_dict={'cap2cap':data_helper.cap2cap_complete, 'cap2img':data_helper.cap2resnet_complete, 'cap2all':data_helper.cap2all_complete, 'vae2all':data_helper.cap2all_complete}
+
+	if gen:
+		data = gen_dict[model_type]()
+	else:
+		data = data_dict[model_type]()
+		new_data = []
+		for i,d in enumerate(data):
+			for k,v in d.items():
+				limit = v.shape[0] - v.shape[0]%32
+				d[k] = v[:limit]
+			new_data.append(d)
+		data = tuple(new_data)
+
+	return data
+
 if __name__ == "__main__":
 	#testSkipThought()
 	#test_FlickCaptions()
 	#test_CocoCaptions()
-	print("not testing anything")
 	#testSkipThought()
-
+	test_CocoCaptions()
