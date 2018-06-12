@@ -30,7 +30,7 @@ if __name__ == '__main__':
 		captions, resnet_embeddings = [s[0] for s in split],[s[1].flatten() for s in split]
 		vectors = encoder.encode(captions)
 	elif len(split[0])==3:
-		captions, resnet_embeddings,vectors = [s[0] for s in split],[s[1].flatten() for s in split], [s[2].flatten for s in split]
+		captions, resnet_embeddings,vectors = [s[0] for s in split],[s[1].flatten() for s in split], [s[2].flatten() for s in split]
 		vectors = np.array(vectors)
 	else: 
 		raise "Input pickled vectors should be a list of two tuples (caption,resnet) or\
