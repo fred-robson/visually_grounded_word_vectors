@@ -23,6 +23,9 @@ if __name__ == '__main__':
 	
 	captions, resnet_embeddings,vectors = None,None,None
 
+	model = skipthoughts.load_model()
+	encoder = skipthoughts.Encoder(model)
+
 	if len(split[0])==2:
 		captions, resnet_embeddings = [s[0] for s in split],[s[1].flatten() for s in split]
 		vectors = encoder.encode(captions)
@@ -31,10 +34,6 @@ if __name__ == '__main__':
 	else: 
 		raise "Input pickled vectors should be a list of two tuples (caption,resnet) or\
 		three-tuples (caption,resnet,embedding)"
-
-	model = skipthoughts.load_model()
-	encoder = skipthoughts.Encoder(model)
-	
 
 	# testing types
 	print(type(vectors),type(vectors[0]),type(resnet_embeddings),type(resnet_embeddings[0]))
@@ -51,6 +50,7 @@ if __name__ == '__main__':
 	print(train_size,dev_size,test_size)
 
 	train = [captions[:train_size],np.asarray(resnet_embeddings[:train_size]),vectors[:train_size]]
+	print(len(train))
 	dev = [captions[train_size:train_size+dev_size],np.asarray(resnet_embeddings[train_size:train_size+dev_size]),vectors[train_size:train_size+dev_size]]
 	test = [captions[:-test_size],np.asarray(resnet_embeddings[:-test_size]),vectors[:-test_size]]
 	#print(train)
