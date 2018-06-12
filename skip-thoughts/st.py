@@ -5,36 +5,66 @@ import argparse
 
 
 
+def load_inputs(path):
+	'''
+	Returns captions,resnet_embeddings,vectors
+	'''
+
+	# load captions and resnet embeddings
+	split = pickle.load(open(path, "rb" ))
+	ret = None
+
+	if len(split[0])==2:
+		# encode captions via skipthought, if there are not emebddings already include
+		model = skipthoughts.load_model()
+		encoder = skipthoughts.Encoder(model)
+		captions, resnet_embeddings = [s[0] for s in split],[s[1].flatten() for s in split]
+		vectors = encoder.encode(captions)
+		ret = captions,resnet_embeddings,vectors
+	elif len(split[0])==3:
+		captions, resnet_embeddings,vectors = [s[0] for s in split],[s[1].flatten() for s in split], [s[2].flatten() for s in split]
+		vectors = np.array(vectors)
+		ret = captions,resnet_embeddings,vectors
+	else: 
+		raise "Input pickled vectors should be a list of two tuples (caption,resnet) or\
+		three-tuples (caption,resnet,embedding)"
+
+	return ret
+
+
+
+
+
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--path', help='path to pickled input', default='coco_split.p')
+	parser.add_argument('--path2', help='path to pickled input', default='coco_split.p')
+	parser.add_argument('--concat',action="store_true")
 	args = parser.parse_args()
 
 	print("\n> =============================================================<")
 	print("> Yo make sure to run: THEANO_FLAGS='floatX=float32' python st.py <")
 	print("\n> =============================================================<")
-	# load captions and resnet embeddings
-	split = pickle.load(open(args.path, "rb" ) )
-	
-	#separate captions and resnet embeddings
-	
 
-	# encode captions via skipthought, if there are not emebddings already included
+
+	captions,resnet_embeddings,vectors = load_inputs(args.path)	
+	if args.concat:
+		print "Concatenating Vectors"
+		captions2,_,vectors2 = load_inputs(args.path2)
+		concat_c2v = {c2:v2 for c2,v2 in zip(captions2,vectors2)}
+		new_vectors = []
+		for c1,v1 in zip(captions,vectors):
+			v2 = c2v2[c1]
+			concat_vectors = np.concatenate((v1,v2))
+			new_vectors.append(concat_vectors)
 	
-	captions, resnet_embeddings,vectors = None,None,None
+	vectors = np.array(vectors)
+			
 
-	model = skipthoughts.load_model()
-	encoder = skipthoughts.Encoder(model)
 
-	if len(split[0])==2:
-		captions, resnet_embeddings = [s[0] for s in split],[s[1].flatten() for s in split]
-		vectors = encoder.encode(captions)
-	elif len(split[0])==3:
-		captions, resnet_embeddings,vectors = [s[0] for s in split],[s[1].flatten() for s in split], [s[2].flatten() for s in split]
-		vectors = np.array(vectors)
-	else: 
-		raise "Input pickled vectors should be a list of two tuples (caption,resnet) or\
-		three-tuples (caption,resnet,embedding)"
+
+
 
 	# testing types
 	print "Types:",type(vectors),type(vectors[0]),type(resnet_embeddings),type(resnet_embeddings[0])
