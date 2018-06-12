@@ -51,7 +51,6 @@ if __name__ == '__main__':
 	print(train_size,dev_size,test_size)
 
 	train = [captions[:train_size],np.asarray(resnet_embeddings[:train_size]),vectors[:train_size]]
-	print(len(train))
 	dev = [captions[train_size:train_size+dev_size],np.asarray(resnet_embeddings[train_size:train_size+dev_size]),vectors[train_size:train_size+dev_size]]
 	test = [captions[:-test_size],np.asarray(resnet_embeddings[:-test_size]),vectors[:-test_size]]
 	#print(train)
