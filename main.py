@@ -106,10 +106,10 @@ def encode(args):
 
             
             if isinstance(data, keras.utils.Sequence):
-                preds = encoder.predict_generator(data)
+                preds = encoder.predict_generator(data,verbose=1)
             
             elif isinstance(data, tuple):
-                preds = encoder.predict(x=data[0])
+                preds = encoder.predict(x=data[0],verbose=1)
             
             X = Captions.ordered_X[len(preds):]
             
