@@ -54,7 +54,6 @@ if __name__ == '__main__':
 		captions2,_,vectors2 = load_inputs(args.path2)
 		new_vectors = []
 		for c1,v1,c2,v2 in zip(captions,vectors,captions2,vectors2):
-			print c1,c2
 			concat_v = np.concatenate((v1,v2))
 			new_vectors.append(concat_v)
 	
