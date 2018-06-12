@@ -56,6 +56,7 @@ if __name__ == '__main__':
 		new_vectors = []
 		for c1,v1 in zip(captions,vectors):
 			v2 = concat_c2v[c1]
+			print "Found"
 			concat_vectors = np.concatenate((v1,v2))
 			new_vectors.append(concat_vectors)
 	
