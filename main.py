@@ -120,9 +120,7 @@ def encode(args):
                 sentence = " ".join(sentence[1:-1])
                 resnet = Captions.get_resnet_output(image_id)
                 output.append((sentence,resnet,y))
-                print(y)
-                print(type(y))
-                quit()
+                
                 
 
             save_loc = base_fp+"/skip-thoughts/our_model_encodings.pkl"
