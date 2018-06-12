@@ -145,10 +145,6 @@ class Metrics(Callback):
 			
 		val_targ = get_val_targ()
 
-		
-
-		print("TARG:",val_targ.shape)
-		print("PREDICT",val_predict.shape)
 
 		val_predict_flat = val_predict.flatten()
 		val_targ_flat = val_targ.flatten()

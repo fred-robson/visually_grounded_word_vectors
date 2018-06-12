@@ -2,8 +2,11 @@ import numpy as np
 import tensorflow as tf
 import random as rn
 import keras
-import os
+import os,sys
+import pickle as pkl
 os.environ['KERAS_BACKEND'] = 'tensorflow'
+base_fp = os.path.dirname(os.path.abspath(__file__))+"/"
+sys.path.insert(0, base_fp) #allows word_vec_utils to be imported
 import argparse
 from models.prototypes.baseline import get_model
 from keras.callbacks import TensorBoard
@@ -103,12 +106,27 @@ def encode(args):
 
             
             if isinstance(data, keras.utils.Sequence):
-                preds = encoder.predict_generator(data)
+                preds = encoder.predict_generator(data,verbose=1)
+            
             elif isinstance(data, tuple):
-                preds = encoder.predict(x=data[0],
-                                y=data[1],
-                                )
-            print(preds)
+                preds = encoder.predict(x=data[0],verbose=1)
+            
+            X = Captions.ordered_X[len(preds):]
+            
+            output = []
+
+            for (image_id,c),y in zip(X,preds):
+                sentence = Captions.WV.indices_to_words(c)
+                sentence = " ".join(sentence[1:-1])
+                resnet = Captions.get_resnet_output(image_id)
+                output.append((sentence,resnet,y))
+                
+                
+
+            save_loc = base_fp+"/skip-thoughts/our_model_encodings.pkl"
+            pkl.dump(output,open(save_loc,"wb+"),2)
+            print("Output saved")
+
 
 
 

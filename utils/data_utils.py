@@ -29,6 +29,8 @@ class CaptionsSuper():
 		self.WV = None
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
 
+		self.ordered_X = []#[(image_id1,caption1)...]
+
 	def split_train_val(self,percent_train=0.7):
 		train = copy.deepcopy(self)
 		train_data = {}
@@ -161,6 +163,16 @@ class CaptionsSuper():
 	########
 	# Misc #
 	########
+	#(caption, resnet output, skipthought vector)
+	def get_skipthought_data(self):
+		c = list(self.get_all_captions())
+		result = list()
+		for captions,image_id in tqdm(c):
+			resnet_output = self.get_resnet_output(image_id)
+			for cap in captions:
+				sentence = " ".join(cap)
+				result.append([sentence,resnet_output])
+		pkl.dump(result, open("coco_split.p", "wb" ), 2)
 
 	def num_images(self):
 		return len(self.data)
@@ -196,12 +208,14 @@ class CaptionsSuper():
 		return X,Y
 
 	def get_captions_list(self):
-		caps = self.get_all_captions()
-		captions = [cap[0] for cap in caps]
-		return captions
+		captions = self.get_all_captions()
+		c = list()
+		for cap in captions:
+			cs = [" ".join(c) for c in cap[0]]
+			c.extend(cs)
+		return c
 
 	def get_cap2cap_batch(self,list_image_ids):
-		#yield({“encoder_input:” X, “decoder_input”: Y1}, {“decoder_output”:Y2})
 		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
 		for image_id in list_image_ids:
 			captions = self.get_captions(image_id)
@@ -210,7 +224,7 @@ class CaptionsSuper():
 				batch_x["encoder_input"].append(self.pad_sequences(x))
 				batch_x["decoder_input"].append(self.pad_sequences(y[:-1]))
 				batch_y["decoder_output"].append(self.pad_sequences(y[1:]))
-				#IDs.append(image_id) TO DO LATER
+				self.ordered_outputs.append((image_id,x))
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
 		batch_y['decoder_output'] = np.expand_dims(batch_y['decoder_output'], axis=2)
@@ -223,16 +237,17 @@ class CaptionsSuper():
 		and each y_i is a list of indices of a different caption 
 		corresponding to the same image
 		'''
+		self.ordered_X = []
 		if self.WV is None: raise "Call initialize_WV() first"
 		list_image_ids = self.get_all_image_ids()
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2cap_batch(x),batch_size)
 		return DG 
 
 	def cap2cap_complete(self):
+		self.ordered_X = []
 		return self.get_cap2cap_batch(list(self.data.keys()))
 
 	def get_cap2resnet_batch(self,list_image_ids):
-		#yield({“encoder_input:” X}, {“projection_output”:Y})
 		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
 		for image_id in list_image_ids:
 			resnet = self.get_resnet_output(image_id)
@@ -242,6 +257,7 @@ class CaptionsSuper():
 				x = self.pad_sequences(x)
 				batch_x["encoder_input"].append(x)
 				batch_y["projection_output"].append(resnet)
+				self.ordered_X.append((image_id,x))
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
 		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
@@ -249,16 +265,17 @@ class CaptionsSuper():
 
 
 	def cap2resnet(self,batch_size=8):
+		self.ordered_X = []
 		if self.WV is None: raise "Call initialize_WV() first" 
 		list_image_ids = self.get_all_image_ids()
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x),batch_size)
 		return DG 
 
 	def cap2resnet_complete(self):
+		self.ordered_X = []
 		return self.get_cap2resnet_batch(list(self.data.keys()))
 
 	def get_cap2all_batch(self,list_image_ids):
-		#yield({“encoder_input:” X, “decoder_input”: Y1}, {“decoder_output”:Y2, “projection_output”:Y3})
 		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
 		for image_id in list_image_ids:
 			captions = self.get_captions(image_id)
@@ -271,19 +288,22 @@ class CaptionsSuper():
 				Y2 = np.expand_dims(Y2, axis=2)
 				batch_y["decoder_output"].append(Y2)
 				batch_y["projection_output"].append(resnet)
+				self.ordered_X.append((image_id,x))
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
-		#batch_y['decoder_output'] = np.expand_dims(batch_y['decoder_output'], axis=2)
+
 		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
 		return dict(batch_x),dict(batch_y)
 
 	def cap2all(self,batch_size=8):
+		self.ordered_X = []
 		if self.WV is None: raise "Call initialize_WV() first"
 		list_image_ids = self.get_all_image_ids()
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x),batch_size)
 		return DG 
 
 	def cap2all_complete(self):
+		self.ordered_X = []
 		return self.get_cap2all_batch(list(self.data.keys()))
 
 
@@ -480,6 +500,13 @@ class FlickrCaptions(CaptionsSuper):
 def test_CocoCaptions():
 
 	Captions = CocoCaptions(3)
+	#caps = Captions.get_captions_list()
+	#import pickle 
+	#pickle.dump(caps, open("coco_caps.p", "wb" ), 2)
+	#quit()
+	for a,b in Captions.get_all_captions():
+		print(a,b)
+		quit()
 	print(len(Captions.get_all_image_ids()))
 
 	WV = CaptionGloveVectors()
@@ -552,6 +579,13 @@ def test_FlickCaptions():
 		print(a,b)
 		quit()
 
+def testSkipThought():
+	#import skipthoughts
+	#model = skipthoughts.load_model()
+	#encoder = skipthoughts.Encoder(model)
+	Captions = CocoCaptions(0)
+	Captions.get_skipthought_data()
+
 def get_data(model_type, data_helper, gen=False):
 	gen_dict={'cap2cap':data_helper.cap2cap, 'cap2img':data_helper.cap2resnet, 'cap2all':data_helper.cap2all, 'vae2all':data_helper.cap2all}
 	data_dict={'cap2cap':data_helper.cap2cap_complete, 'cap2img':data_helper.cap2resnet_complete, 'cap2all':data_helper.cap2all_complete, 'vae2all':data_helper.cap2all_complete}
@@ -571,8 +605,8 @@ def get_data(model_type, data_helper, gen=False):
 	return data
 
 if __name__ == "__main__":
+	testSkipThought()
 	#test_FlickCaptions()
-	test_CocoCaptions()
-	
-	
-
+	#test_CocoCaptions()
+	#testSkipThought()
+	#test_CocoCaptions()
