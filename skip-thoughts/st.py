@@ -1,22 +1,40 @@
 import skipthoughts, pickle
 import eval_trec, eval_rank
 import numpy as np
+import argparse
+
+
 
 if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--path', help='path to pickled input', default='coco_split.p')
+	args = parser.parse_args()
+
 	print("\n> =============================================================<")
 	print("> Yo make sure to run: THEANO_FLAGS='floatX=float32' python st.py <")
 	print("\n> =============================================================<")
 	# load captions and resnet embeddings
-	X = pickle.load(open("coco_caps.p", "rb" ) )
-	split = pickle.load(open("coco_split.p", "rb" ) )
+	split = pickle.load(open(args.path, "rb" ) )
 	
 	#separate captions and resnet embeddings
-	captions, resnet_embeddings = [s[0] for s in split],[s[1].flatten() for s in split]
+	
 
-	# encode captions via skipthought
+	# encode captions via skipthought, if there are not emebddings already included
+	
+	captions, resnet_embeddings,vectors = None,None,None
+
+	if len(split[0])==2:
+		captions, resnet_embeddings = [s[0] for s in split],[s[1].flatten() for s in split]
+		vectors = encoder.encode(captions)
+	elif len(split[0])==3:
+		captions, resnet_embeddings,vectors = [s[0] for s in split],[s[1].flatten() for s in split], [s[2].flatten for s in split]
+	else: 
+		raise "Input pickled vectors should be a list of two tuples (caption,resnet) or\
+		three-tuples (caption,resnet,embedding)"
+
 	model = skipthoughts.load_model()
 	encoder = skipthoughts.Encoder(model)
-	vectors = encoder.encode(X)
+	
 
 	# testing types
 	print(type(vectors),type(vectors[0]),type(resnet_embeddings),type(resnet_embeddings[0]))
@@ -26,9 +44,9 @@ if __name__ == '__main__':
 
 	# generate train, dev, and test set
 	print(len(vectors),len(captions),len(resnet_embeddings))
-	train_size = int((len(vectors)*0.8)//1)
+	train_size = int((len(vectors)*0.7)//1)
 	dev_size = int((len(vectors)*0.1)//1)
-	test_size = int((len(vectors)*0.1)//1)
+	test_size = int((len(vectors)*0.2)//1)
 
 	print(train_size,dev_size,test_size)
 
