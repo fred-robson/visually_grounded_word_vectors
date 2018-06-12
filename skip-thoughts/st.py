@@ -56,7 +56,7 @@ if __name__ == '__main__':
 	test = [captions[:-test_size],np.asarray(resnet_embeddings[:-test_size]),vectors[:-test_size]]
 	#print(train)
 	saveto = "mod.npz"
-	eval_rank.trainer(train, dev,dim_im=1000,saveto=saveto,validFreq=10)
+	eval_rank.trainer(train, dev,dim_im=1000,dim_s=vectors.shape[1],saveto=saveto,validFreq=10)
 	eval_rank.evaluate(test, saveto, evaluate=True)
 
 	#eval_trec.evaluate(encoder, evalcv=False, evaltest=True)
