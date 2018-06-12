@@ -52,20 +52,13 @@ if __name__ == '__main__':
 	if args.concat:
 		print "Concatenating Vectors"
 		captions2,_,vectors2 = load_inputs(args.path2)
+		new_vectors = []
 		for c1,v1,c2,v2 in zip(captions,vectors,captions2,vectors2):
 			print c1,c2
-			print v1,v2
-
-		'''
-		new_vectors = []
-		for c1,v1 in zip(captions,vectors):
-			v2 = concat_c2v[c1]
-			print "Found"
-			concat_vectors = np.concatenate((v1,v2))
-			new_vectors.append(concat_vectors)
-		'''
+			concat_v = np.concatenate((v1,v2))
+			new_vectors.append(concat_v)
 	
-	vectors = np.array(vectors)
+			vectors = np.array(new_vectors)
 			
 
 
