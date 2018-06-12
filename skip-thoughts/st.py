@@ -37,10 +37,11 @@ if __name__ == '__main__':
 		three-tuples (caption,resnet,embedding)"
 
 	# testing types
-	print(type(vectors),type(vectors[0]),type(resnet_embeddings),type(resnet_embeddings[0]))
+	print "Types:",type(vectors),type(vectors[0]),type(resnet_embeddings),type(resnet_embeddings[0])
 
 	# shape
-	print(resnet_embeddings[0].shape)
+	print "Resnet Shapes",resnet_embeddings[0].shape
+	print "Vectors Shape:",vectors.shape
 
 	# generate train, dev, and test set
 	print(len(vectors),len(captions),len(resnet_embeddings))
