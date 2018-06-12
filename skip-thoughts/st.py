@@ -55,7 +55,7 @@ if __name__ == '__main__':
 		concat_c2v = {c2:v2 for c2,v2 in zip(captions2,vectors2)}
 		new_vectors = []
 		for c1,v1 in zip(captions,vectors):
-			v2 = c2v2[c1]
+			v2 = concat_c2v[c1]
 			concat_vectors = np.concatenate((v1,v2))
 			new_vectors.append(concat_vectors)
 	
