@@ -224,7 +224,7 @@ class CaptionsSuper():
 				batch_x["encoder_input"].append(self.pad_sequences(x))
 				batch_x["decoder_input"].append(self.pad_sequences(y[:-1]))
 				batch_y["decoder_output"].append(self.pad_sequences(y[1:]))
-				self.ordered_outputs.append((image_id,x))
+				self.ordered_X.append((image_id,x))
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
 		batch_y['decoder_output'] = np.expand_dims(batch_y['decoder_output'], axis=2)
