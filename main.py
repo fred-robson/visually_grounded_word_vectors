@@ -113,13 +113,14 @@ def encode(args):
             
             
             X = Captions.ordered_IDs
+            print("ordered_X1",len(X)," ")
             
             new_X = []
             for image_id in X:
                 for c in Captions.get_captions(image_id):
                     new_X.append((c,image_id))
             X = new_X
-            print("ordered_X",len(X)," ")
+            print("ordered_X2",len(new_X)," ")
             X = X[len(preds):]
             print("Predicted ",len(preds)," preds")
             
