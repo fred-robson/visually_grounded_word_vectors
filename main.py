@@ -120,7 +120,6 @@ def encode(args):
                 captions = Captions.get_captions(image_id)
                 X_group, Y_group = Captions.get_caption_convolutions(captions,False)
                 for c,_ in zip(X_group,Y_group):
-                    print(c)
                     new_X.append((c,image_id))
 
             print("ordered_X2",len(new_X)," ")
@@ -129,7 +128,8 @@ def encode(args):
             
             output = []
 
-            for (c,image_id),y in zip(new_X,preds):
+            for x,y in zip(new_X,preds):
+                c,image_id =x
                 sentence = Captions.WV.indices_to_words(c)
                 sentence = " ".join(sentence[1:-1])
                 resnet = Captions.get_resnet_output(image_id)
