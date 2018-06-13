@@ -118,7 +118,7 @@ def encode(args):
             new_X = []
             for image_id in X:
                 captions = Captions.get_captions(image_id)
-                for X,_ in Captions.get_caption_convolutions(captions,True):
+                for X,Y in Captions.get_caption_convolutions(captions,True):
                     for c in X:
                         new_X.append((c,image_id))
             X = new_X
