@@ -121,8 +121,9 @@ def encode(args):
                 for convolutions in Captions.get_caption_convolutions(captions,False):
                     for c in convolutions[0]:
                         new_X.append((c,image_id))
+
             print("ordered_X2",len(new_X)," ")
-            X = X[len(preds):]
+            X = new_X[len(preds):]
             print("Predicted ",len(preds)," preds")
             
             
