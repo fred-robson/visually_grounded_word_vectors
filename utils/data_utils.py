@@ -265,7 +265,7 @@ class CaptionsSuper():
 
 
 	def cap2resnet(self,batch_size=8):
-		if self.WV is None: raise "Call initialize_WV() first" \
+		if self.WV is None: raise "Call initialize_WV() first" 
 		DG = DataGenerator(self.ordered_IDs,lambda x: self.get_cap2resnet_batch(x),batch_size)
 		return DG 
 
