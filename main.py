@@ -117,8 +117,8 @@ def encode(args):
             
             new_X = []
             for image_id in X:
-                captions = self.get_captions(image_id)
-                X_group, Y_group = self.get_caption_convolutions(captions,False)
+                captions = Captions.get_captions(image_id)
+                X_group, Y_group = Captions.get_caption_convolutions(captions,False)
                 for x,y in zip(X_group,Y_group):
                     new_X.append((x,image_id))
 
