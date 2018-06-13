@@ -141,6 +141,7 @@ def word_embed(args):
 
 
 
+
 def encode(args):
 
     Captions = CocoCaptions(args.data,args.max_samples)
