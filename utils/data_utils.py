@@ -30,6 +30,7 @@ class CaptionsSuper():
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
 
 		self.ordered_X = []#[(image_id1,caption1)...]
+		self.ordered_IDS = None
 
 	def split_train_val(self,percent_train=0.7):
 		train = copy.deepcopy(self)
@@ -239,11 +240,13 @@ class CaptionsSuper():
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
 		list_image_ids = self.get_all_image_ids()
+		self.ordered_IDS = list_image_ids
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2cap_batch(x),batch_size)
 		return DG 
 
 	def cap2cap_complete(self):
-		return self.get_cap2cap_batch(list(self.data.keys()))
+		self.ordered_IDS = list(self.data.keys())
+		return self.get_cap2cap_batch(self.ordered_IDS)
 
 	def get_cap2resnet_batch(self,list_image_ids):
 		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
@@ -265,11 +268,13 @@ class CaptionsSuper():
 	def cap2resnet(self,batch_size=8):
 		if self.WV is None: raise "Call initialize_WV() first" 
 		list_image_ids = self.get_all_image_ids()
+		self.ordered_IDS = list_image_ids
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x),batch_size)
 		return DG 
 
 	def cap2resnet_complete(self):
-		return self.get_cap2resnet_batch(list(self.data.keys()))
+		self.ordered_IDS = list(self.data.keys())
+		return self.get_cap2resnet_batch(self.ordered_IDS)
 
 	def get_cap2all_batch(self,list_image_ids):
 		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
@@ -294,11 +299,13 @@ class CaptionsSuper():
 	def cap2all(self,batch_size=8):
 		if self.WV is None: raise "Call initialize_WV() first"
 		list_image_ids = self.get_all_image_ids()
+		self.ordered_IDS = list_image_ids
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x),batch_size)
 		return DG 
 
 	def cap2all_complete(self):
-		return self.get_cap2all_batch(list(self.data.keys()))
+		self.ordered_IDS = list(self.data.keys())
+		return self.get_cap2all_batch(self.ordered_IDS)
 
 
 	def get_negative_samples(self,image_id_list,num_negative=5):
