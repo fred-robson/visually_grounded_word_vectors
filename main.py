@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import random as rn
+from tqdm import tqdm
 import keras
 import os,sys
 import pickle as pkl
@@ -103,6 +104,7 @@ def encode(args):
             model.compile()
 
             encoder = model.get_encoder()
+            embeddings = None
 
             if args.word_embed:
                 word_encoder = model.get_word_encoder()
@@ -111,6 +113,10 @@ def encode(args):
             
                 elif isinstance(data, tuple):
                     embeddings = word_encoder.predict(x=data[0],verbose=1)
+
+                save_loc = base_fp+"/skip-thoughts/our_model_encodings.pkl"
+
+            print(embeddings)
             
             if isinstance(data, keras.utils.Sequence):
                 preds = encoder.predict_generator(data,verbose=1)
@@ -135,7 +141,7 @@ def encode(args):
             
             output = []
 
-            for x,y in zip(new_X,preds):
+            for x,y in tqdm(zip(new_X,preds)):
                 c,image_id =x
                 sentence = Captions.WV.indices_to_words(c)
                 sentence = " ".join(sentence[1:-1])

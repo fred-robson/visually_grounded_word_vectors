@@ -599,10 +599,8 @@ def get_data(model_type, data_helper, gen=False):
 	return data
 
 if __name__ == "__main__":
-	Captions = CocoCaptions(3)
-	for captions in Captions.get_captions((1298,'tiny')):
-		print(captions)
-	#testSkipThought()
+	Captions = CocoCaptions(2)
+	testSkipThought()
 	#test_FlickCaptions()
 	#test_CocoCaptions()
 	#testSkipThought()
