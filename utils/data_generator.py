@@ -34,7 +34,6 @@ class DataGenerator(keras.utils.Sequence):
 
     def on_epoch_end(self):
         'Updates indexes after each epoch'
-        #self.Captions.ordered_X = []
         self.indexes = np.arange(len(self.image_ids))
         if self.shuffle == True:
             np.random.shuffle(self.indexes)

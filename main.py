@@ -112,7 +112,13 @@ def encode(args):
                 preds = encoder.predict(x=data[0],verbose=1)
             
             
-            X = Captions.ordered_X[len(preds):]
+            X = Captions.ordered_IDs
+            
+            new_X = []
+            for image_id in X:
+                for c in Captions.get_captions(image_id):
+                    new_X.append((c,image_id))
+            X = new_X
             print("ordered_X",len(X)," ")
             X = X[len(preds):]
             print("Predicted ",len(preds)," preds")
@@ -120,7 +126,7 @@ def encode(args):
             
             output = []
 
-            for (image_id,c),y in zip(X,preds):
+            for (c,image_id),y in zip(X,preds):
                 sentence = Captions.WV.indices_to_words(c)
                 sentence = " ".join(sentence[1:-1])
                 resnet = Captions.get_resnet_output(image_id)
