@@ -112,7 +112,7 @@ def encode(args):
                 preds = encoder.predict(x=data[0],verbose=1)
             
             
-            X = Captions.ordered_IDs[len(preds):]
+            X = Captions.ordered_IDs
             
             new_X = []
             for image_id in X:
