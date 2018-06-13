@@ -30,7 +30,7 @@ class CaptionsSuper():
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
 
 		self.ordered_X = []#[(image_id1,caption1)...]
-		self.ordered_IDS = None
+		self.ordered_IDs = None
 
 	def split_train_val(self,percent_train=0.7):
 		train = copy.deepcopy(self)
@@ -246,7 +246,7 @@ class CaptionsSuper():
 
 	def cap2cap_complete(self):
 		self.ordered_IDs = list(self.data.keys())
-		return self.get_cap2cap_batch(self.ordered_IDS)
+		return self.get_cap2cap_batch(self.ordered_IDs)
 
 	def get_cap2resnet_batch(self,list_image_ids):
 		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
@@ -274,7 +274,7 @@ class CaptionsSuper():
 
 	def cap2resnet_complete(self):
 		self.ordered_IDS = list(self.data.keys())
-		return self.get_cap2resnet_batch(self.ordered_IDS)
+		return self.get_cap2resnet_batch(self.ordered_IDs)
 
 	def get_cap2all_batch(self,list_image_ids):
 		batch_x,batch_y = defaultdict(lambda:[]),defaultdict(lambda:[])
@@ -305,7 +305,7 @@ class CaptionsSuper():
 
 	def cap2all_complete(self):
 		self.ordered_IDs = list(self.data.keys())
-		return self.get_cap2all_batch(self.ordered_IDS)
+		return self.get_cap2all_batch(self.ordered_IDs)
 
 
 	def get_negative_samples(self,image_id_list,num_negative=5):
