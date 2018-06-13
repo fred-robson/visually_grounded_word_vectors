@@ -123,7 +123,7 @@ def encode(args):
                     new_X.append((c,image_id))
 
             print("ordered_X2",len(new_X)," ")
-            X = new_X[len(preds):]
+            X = new_X
             print("Predicted ",len(preds)," preds")
             print("ordered_X2",len(X)," ")
             
