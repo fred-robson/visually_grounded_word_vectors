@@ -125,7 +125,7 @@ def encode(args):
             print("ordered_X2",len(new_X)," ")
             X = new_X[len(preds):]
             print("Predicted ",len(preds)," preds")
-            print("ordered_X2",len(new_X)," ")
+            print("ordered_X2",len(X)," ")
             
             
             output = []
@@ -136,7 +136,7 @@ def encode(args):
                 resnet = Captions.get_resnet_output(image_id)
                 output.append((sentence,resnet,y))
 
-            print("Predicted ",len(output)," outputs")
+            print("U ",len(output)," outputs")
 
                 
 
