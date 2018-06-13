@@ -304,7 +304,8 @@ class CaptionsSuper():
 		return DG 
 
 	def cap2all_complete(self):
-		self.ordered_IDs = list(self.data.keys())
+		print("cap2all called")
+		self.ordered_IDs = self.get_all_image_ids()
 		return self.get_cap2all_batch(self.ordered_IDs)
 
 
