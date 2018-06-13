@@ -211,7 +211,7 @@ class CaptionsSuper():
 							Y.append(y)
 						else: 
 							X.append(c)
-							y.append(o)
+							Y.append(o)
 		return X,Y
 
 	def get_captions_list(self):
