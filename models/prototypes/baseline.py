@@ -54,6 +54,7 @@ class Cap2(object):
 	def __init__(self, h_params, embeddings=None, graph_path='./models/visualization/{0}.png'):
 		if type(h_params) is HParams:
 			self.h_params = h_params
+			print("Max Sentence Length:",self.h_params.max_seq_length)
 		else:
 			self.h_params = HParams(**h_params)
 		self.embedding_matrix = embeddings
