@@ -194,7 +194,7 @@ class CaptionsSuper():
 							value=self.WV.w2i[pad])
 		return ret.flatten()
 
-	def get_caption_convolutions(self,captions,original=False):
+	def get_caption_convolutions(self,captions,w2i=True):
 		'''
 		Given a set of n captions returns a pair of lists where for each 
 		caption c1, there will be 4 pairs (c1,c2) where c2 is in captions but
@@ -204,7 +204,7 @@ class CaptionsSuper():
 		for c in captions:
 				for o in captions:
 					if o!=c: 
-						if not original:
+						if w2i:
 							x = self.WV.words_to_indices(c)
 							y = self.WV.words_to_indices(o)
 							X.append(x)
