@@ -306,6 +306,7 @@ class CaptionsSuper():
 	def cap2all_complete(self):
 		print("cap2all called")
 		self.ordered_IDs = self.get_all_image_ids()
+		print(len(self.ordered_IDs))
 		return self.get_cap2all_batch(self.ordered_IDs)
 
 
