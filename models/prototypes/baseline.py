@@ -44,7 +44,7 @@ class KLDivergenceLayer(Layer):
         kl_batch = - .5 * K.sum(1 + log_var -
                                 K.square(mu) -
                                 K.exp(log_var), axis=-1)
-        self.add_loss(K.mean(kl_batch), inputs=inputs)
+        self.add_loss(0.2*K.mean(kl_batch), inputs=inputs)
         return inputs
 
 class Cap2(object):
