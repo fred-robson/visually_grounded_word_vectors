@@ -123,14 +123,12 @@ def encode(args):
                     new_X.append((c,image_id))
 
             print("ordered_X2",len(new_X)," ")
-            X = new_X
             print("Predicted ",len(preds)," preds")
-            print("ordered_X2",len(X)," ")
             
             
             output = []
 
-            for (c,image_id),y in zip(X,preds):
+            for (c,image_id),y in zip(new_X,preds):
                 sentence = Captions.WV.indices_to_words(c)
                 sentence = " ".join(sentence[1:-1])
                 resnet = Captions.get_resnet_output(image_id)
