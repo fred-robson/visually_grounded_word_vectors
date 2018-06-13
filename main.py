@@ -113,8 +113,10 @@ def encode(args):
             
             
             X = Captions.ordered_X[len(preds):]
-            print("Predicted ",len(preds)," preds")
             print("ordered_X",len(X)," ")
+            X = X[len(preds):]
+            print("Predicted ",len(preds)," preds")
+            
             
             output = []
 
