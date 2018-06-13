@@ -54,7 +54,6 @@ if __name__ == '__main__':
 		captions2,_,vectors2 = load_inputs(args.path2)
 		new_vectors = []
 		for c1,v1,c2,v2 in zip(captions,vectors,captions2,vectors2):
-			print c1,c2
 			concat_v = np.concatenate((v1,v2))
 			new_vectors.append(concat_v)
 	
@@ -85,7 +84,7 @@ if __name__ == '__main__':
 	test = [captions[:-test_size],np.asarray(resnet_embeddings[:-test_size]),vectors[:-test_size]]
 	#print(train)
 	saveto = "mod.npz"
-	eval_rank.trainer(train, dev,dim_im=1000,dim_s=vectors.shape[1],saveto=saveto,validFreq=10)
+	eval_rank.trainer(train, dev,dim=vectors.shape[1]*2/3,dim_im=1000,dim_s=vectors.shape[1],saveto=saveto,validFreq=10,max_epochs=30)
 	eval_rank.evaluate(test, saveto, evaluate=True)
 
 	#eval_trec.evaluate(encoder, evalcv=False, evaltest=True)

@@ -1,7 +1,7 @@
 (dp1
 S'dim'
 p2
-I1000
+I1024
 sS'optimizer'
 p3
 S'adam'
@@ -42,7 +42,7 @@ p16
 F0.20000000000000001
 sS'dim_s'
 p17
-I4800
+I1024
 sS'valid_batch_size'
 p18
 I100

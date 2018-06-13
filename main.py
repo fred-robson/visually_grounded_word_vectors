@@ -111,7 +111,12 @@ def encode(args):
             elif isinstance(data, tuple):
                 preds = encoder.predict(x=data[0],verbose=1)
             
+            
             X = Captions.ordered_X[len(preds):]
+            print("ordered_X",len(X)," ")
+            X = X[len(preds):]
+            print("Predicted ",len(preds)," preds")
+            
             
             output = []
 
@@ -120,7 +125,9 @@ def encode(args):
                 sentence = " ".join(sentence[1:-1])
                 resnet = Captions.get_resnet_output(image_id)
                 output.append((sentence,resnet,y))
-                
+
+            print("Predicted ",len(output)," outputs")
+
                 
 
             save_loc = base_fp+"/skip-thoughts/our_model_encodings.pkl"
@@ -185,7 +192,7 @@ def train(args):
                         callbacks=[callback_log]+[metrics])
     else:
         if args.model[:4] == "cap2" or args.model[:4] == "vae2" :
-            inputs, outputs = None, None
+            inputs, ordered_outputs = None, None
             datagen, valgen = None, None
             cap2 = None
             callbacks = [callback_log]
