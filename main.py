@@ -104,6 +104,13 @@ def encode(args):
 
             encoder = model.get_encoder()
 
+            if args.word_embed:
+                word_encoder = model.get_word_encoder()
+                if isinstance(data, keras.utils.Sequence):
+                    embeddings = word_encoder.predict_generator(data,verbose=1)
+            
+                elif isinstance(data, tuple):
+                    embeddings = word_encoder.predict(x=data[0],verbose=1)
             
             if isinstance(data, keras.utils.Sequence):
                 preds = encoder.predict_generator(data,verbose=1)
@@ -340,7 +347,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='whether to use gpu or cpu', type=int, default=0)
     parser.add_argument('--batch_size', help='batch_size', type=int, default=32)
     parser.add_argument('--train_val_split',help='determine percent train [0,1]',type=float,default=0.7)
-
+    parser.add_argument('--word_embed',help='whether to get word embeddigs when encoding',action='store_true')
 
     args = parser.parse_args()
 

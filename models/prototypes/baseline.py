@@ -63,6 +63,12 @@ class Cap2(object):
 		self.model = None
 		self.gpu_model = None
 
+	def _word_encoder_model(self):
+		input_layer = self.model.get_layer(name=self.encoder_input).input
+		output_layer = self.model.get_layer(name='dense_1').output
+		model = Model(inputs=input_layer, outputs=output_layer)
+		return model 
+
 	def _encoder_model(self):
 		input_layer = self.model.get_layer(name=self.encoder_input).input
 		output_layer = self.model.get_layer(name=self.encoder_output).output
@@ -74,9 +80,15 @@ class Cap2(object):
 		plot_model(self.model, to_file=path)
 
 	def _encoder(self):
-		encoder_input = Input(shape=(self.h_params.max_seq_length,),dtype='int32', name=self.encoder_input)
+		encoder_input = Input(shape=(None,),dtype='int32', name=self.encoder_input)
+		#encoder_input = Input(shape=(self.h_params.max_seq_length,),dtype='int32', name=self.encoder_input)
+		
+		
+		#glove_embedding_encoder = Embedding(self.h_params.num_embeddings, self.h_params.embed_dim, weights=[self.embedding_matrix], 
+		#				input_length=self.h_params.max_seq_length, 
+		#				trainable=False , mask_zero=True, name='GloVe_embedding_encoder')
 		glove_embedding_encoder = Embedding(self.h_params.num_embeddings, self.h_params.embed_dim, weights=[self.embedding_matrix], 
-						input_length=self.h_params.max_seq_length, 
+						input_length=None, 
 						trainable=False , mask_zero=True, name='GloVe_embedding_encoder')
 		x = glove_embedding_encoder(encoder_input)
 		x = Dense(self.h_params.embed_dim)(x)
@@ -96,6 +108,10 @@ class Cap2(object):
 
 	def get_encoder(self):
 		encoder = self._encoder_model()
+		return encoder
+
+	def get_word_encoder(self):
+		encoder = self._word_encoder_model()
 		return encoder
 
 	def compile(self, num_gpu=0):
@@ -121,11 +137,14 @@ class Cap2Cap(Cap2):
 		self.model_type = 'cap2cap'
 
 	def _decoder(self, initial_state):
-		decoder_input = Input(shape=(self.h_params.max_seq_length,),dtype='int32', name='decoder_input')
-		#x_dec = Masking(mask_value=0)(decoder_input)
+		decoder_input = Input(shape=(None,),dtype='int32', name='decoder_input')
+		#decoder_input = Input(shape=(self.h_params.max_seq_length,),dtype='int32', name='decoder_input')
 		glove_embedding_decoder = Embedding(self.h_params.num_embeddings, self.h_params.embed_dim, weights=[self.embedding_matrix], 
-					input_length=self.h_params.max_seq_length, 
+					input_length=None, 
 					trainable=False , mask_zero=True, name='GloVe_embedding_decoder')
+		#glove_embedding_decoder = Embedding(self.h_params.num_embeddings, self.h_params.embed_dim, weights=[self.embedding_matrix], 
+		#			input_length=self.h_params.max_seq_length, 
+		#			trainable=False , mask_zero=True, name='GloVe_embedding_decoder')
 		x_dec = glove_embedding_decoder(decoder_input)
 		x_dec = Dense(self.h_params.embed_dim)(x_dec)
 		x_dec = LSTM(self.h_params.hidden_dim, dropout=self.h_params.dropout, 
@@ -257,10 +276,10 @@ if __name__ == '__main__':
 						num_embeddings=embedding_matrix.shape[0],
 						activation='relu',
 						latent_dim=1000)
-	cap2 = Vae2All(hparams, embeddings=embedding_matrix)
+	cap2 = Cap2All(hparams, embeddings=embedding_matrix)
 	cap2.compile()
 	cap2.visualize()
-	encoder = cap2.get_encoder()
-	path = './models/visualization/{0}.png'.format('encoder')
+	encoder = cap2.get_word_encoder()
+	path = './models/visualization/{0}.png'.format('word_encoder')
 	plot_model(encoder, to_file=path)
 
