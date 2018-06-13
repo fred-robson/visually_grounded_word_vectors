@@ -117,10 +117,10 @@ def encode(args):
             
             new_X = []
             for image_id in X:
-                captions = Captions.get_captions(image_id)
-                for convolutions in Captions.get_caption_convolutions(captions,False):
-                    for c in convolutions[0]:
-                        new_X.append((c,image_id))
+                captions = self.get_captions(image_id)
+                X_group, Y_group = self.get_caption_convolutions(captions,False)
+                for x,y in zip(X_group,Y_group):
+                    new_X.append((x,image_id))
 
             print("ordered_X2",len(new_X)," ")
             X = new_X[len(preds):]
