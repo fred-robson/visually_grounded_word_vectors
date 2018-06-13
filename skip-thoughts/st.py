@@ -14,7 +14,7 @@ def load_inputs(path,limit=-1):
 	split = pickle.load(open(path, "rb" ))
 	ret = None
 	if limit != -1:
-		split = split[limit:]
+		split = split[:limit]
 
 	if len(split[0])==2:
 		# encode captions via skipthought, if there are not emebddings already include

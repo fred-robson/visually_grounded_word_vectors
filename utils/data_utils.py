@@ -21,8 +21,11 @@ class CaptionsSuper():
 		self.data = data 
 		if not limit is None:
 			data = {}
-			for i,(k,v) in enumerate(self.data.items()):
+			keys = self.data.keys()
+			sorted(keys)
+			for i,k in enumerate(keys):
 				if i == limit: break
+				v = self.data[k]
 				data[k] = v
 			self.data = data
 
