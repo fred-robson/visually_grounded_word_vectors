@@ -30,7 +30,7 @@ class CaptionsSuper():
 		self.max_caption_len = self.get_longest_caption()+2 #Plus two for start and end tokens
 
 		self.ordered_X = []#[(image_id1,caption1)...]
-		self.ordered_IDs = None
+		self.ordered_IDs = list(self.data.keys())
 
 	def split_train_val(self,percent_train=0.7):
 		train = copy.deepcopy(self)
@@ -44,6 +44,8 @@ class CaptionsSuper():
 				val_data[k] = v
 		train.data = train_data
 		val.data = val_data
+		train.ordered_IDs = list(train.data.keys())
+		val.ordered_IDs = list(val.data.keys())
 		return train,val
 
 	def __len__(self):
@@ -239,13 +241,10 @@ class CaptionsSuper():
 		corresponding to the same image
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
-		list_image_ids = self.get_all_image_ids()
-		self.ordered_IDs = list_image_ids
-		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2cap_batch(x),batch_size)
+		DG = DataGenerator(self.ordered_IDs,lambda x: self.get_cap2cap_batch(x),batch_size)
 		return DG 
 
 	def cap2cap_complete(self):
-		self.ordered_IDs = list(self.data.keys())
 		return self.get_cap2cap_batch(self.ordered_IDs)
 
 	def get_cap2resnet_batch(self,list_image_ids):
@@ -266,14 +265,11 @@ class CaptionsSuper():
 
 
 	def cap2resnet(self,batch_size=8):
-		if self.WV is None: raise "Call initialize_WV() first" 
-		list_image_ids = self.get_all_image_ids()
-		self.ordered_IDs = list_image_ids
-		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x),batch_size)
+		if self.WV is None: raise "Call initialize_WV() first" \
+		DG = DataGenerator(self.ordered_IDs,lambda x: self.get_cap2resnet_batch(x),batch_size)
 		return DG 
 
 	def cap2resnet_complete(self):
-		self.ordered_IDS = list(self.data.keys())
 		return self.get_cap2resnet_batch(self.ordered_IDs)
 
 	def get_cap2all_batch(self,list_image_ids):
@@ -298,15 +294,10 @@ class CaptionsSuper():
 
 	def cap2all(self,batch_size=8):
 		if self.WV is None: raise "Call initialize_WV() first"
-		list_image_ids = self.get_all_image_ids()
-		self.ordered_IDs = list_image_ids
-		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x),batch_size)
+		DG = DataGenerator(self.ordered_IDs,lambda x: self.get_cap2all_batch(x),batch_size)
 		return DG 
 
 	def cap2all_complete(self):
-		print("cap2all called")
-		self.ordered_IDs = self.get_all_image_ids()
-		print(len(self.ordered_IDs))
 		return self.get_cap2all_batch(self.ordered_IDs)
 
 
