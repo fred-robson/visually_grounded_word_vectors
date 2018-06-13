@@ -240,12 +240,12 @@ class CaptionsSuper():
 		'''
 		if self.WV is None: raise "Call initialize_WV() first"
 		list_image_ids = self.get_all_image_ids()
-		self.ordered_IDS = list_image_ids
+		self.ordered_IDs = list_image_ids
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2cap_batch(x),batch_size)
 		return DG 
 
 	def cap2cap_complete(self):
-		self.ordered_IDS = list(self.data.keys())
+		self.ordered_IDs = list(self.data.keys())
 		return self.get_cap2cap_batch(self.ordered_IDS)
 
 	def get_cap2resnet_batch(self,list_image_ids):
@@ -268,7 +268,7 @@ class CaptionsSuper():
 	def cap2resnet(self,batch_size=8):
 		if self.WV is None: raise "Call initialize_WV() first" 
 		list_image_ids = self.get_all_image_ids()
-		self.ordered_IDS = list_image_ids
+		self.ordered_IDs = list_image_ids
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2resnet_batch(x),batch_size)
 		return DG 
 
@@ -299,12 +299,12 @@ class CaptionsSuper():
 	def cap2all(self,batch_size=8):
 		if self.WV is None: raise "Call initialize_WV() first"
 		list_image_ids = self.get_all_image_ids()
-		self.ordered_IDS = list_image_ids
+		self.ordered_IDs = list_image_ids
 		DG = DataGenerator(list_image_ids,lambda x: self.get_cap2all_batch(x),batch_size)
 		return DG 
 
 	def cap2all_complete(self):
-		self.ordered_IDS = list(self.data.keys())
+		self.ordered_IDs = list(self.data.keys())
 		return self.get_cap2all_batch(self.ordered_IDS)
 
 
