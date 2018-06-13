@@ -21,8 +21,11 @@ class CaptionsSuper():
 		self.data = data 
 		if not limit is None:
 			data = {}
-			for i,(k,v) in enumerate(self.data.items()):
+			keys = self.data.keys()
+			sorted(keys)
+			for i,k in enumerate(keys):
 				if i == limit: break
+				v = self.data[k]
 				data[k] = v
 			self.data = data
 
@@ -261,6 +264,7 @@ class CaptionsSuper():
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
 		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
+
 		return dict(batch_x),dict(batch_y)
 
 
@@ -288,7 +292,6 @@ class CaptionsSuper():
 				self.ordered_X.append((image_id,x))
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
-
 		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
 		return dict(batch_x),dict(batch_y)
 
@@ -599,10 +602,8 @@ def get_data(model_type, data_helper, gen=False):
 	return data
 
 if __name__ == "__main__":
-	Captions = CocoCaptions(3)
-	for captions in Captions.get_captions((1298,'tiny')):
-		print(captions)
-	#testSkipThought()
+	Captions = CocoCaptions(2)
+	testSkipThought()
 	#test_FlickCaptions()
 	#test_CocoCaptions()
 	#testSkipThought()

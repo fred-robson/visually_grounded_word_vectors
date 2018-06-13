@@ -5,7 +5,7 @@ import argparse
 
 
 
-def load_inputs(path):
+def load_inputs(path,limit=-1):
 	'''
 	Returns captions,resnet_embeddings,vectors
 	'''
@@ -13,6 +13,8 @@ def load_inputs(path):
 	# load captions and resnet embeddings
 	split = pickle.load(open(path, "rb" ))
 	ret = None
+	if limit != -1:
+		split = split[:limit]
 
 	if len(split[0])==2:
 		# encode captions via skipthought, if there are not emebddings already include
@@ -41,6 +43,7 @@ if __name__ == '__main__':
 	parser.add_argument('--path', help='path to pickled input', default='coco_split.p')
 	parser.add_argument('--path2', help='path to pickled input', default='coco_split.p')
 	parser.add_argument('--concat',action="store_true")
+	parser.add_argument('--limit',default=-1,type=int)
 	args = parser.parse_args()
 
 	print("\n> =============================================================<")
@@ -48,7 +51,7 @@ if __name__ == '__main__':
 	print("\n> =============================================================<")
 
 
-	captions,resnet_embeddings,vectors = load_inputs(args.path)	
+	captions,resnet_embeddings,vectors = load_inputs(args.path,args.limit)	
 	if args.concat:
 		print "Concatenating Vectors"
 		captions2,_,vectors2 = load_inputs(args.path2)
@@ -84,7 +87,7 @@ if __name__ == '__main__':
 	test = [captions[:-test_size],np.asarray(resnet_embeddings[:-test_size]),vectors[:-test_size]]
 	#print(train)
 	saveto = "mod.npz"
-	eval_rank.trainer(train, dev,dim=vectors.shape[1]*2/3,dim_im=1000,dim_s=vectors.shape[1],saveto=saveto,validFreq=10,max_epochs=30)
+	eval_rank.trainer(train, dev,dim_im=1000,dim_s=vectors.shape[1],saveto=saveto,validFreq=10,max_epochs=30)
 	eval_rank.evaluate(test, saveto, evaluate=True)
 
 	#eval_trec.evaluate(encoder, evalcv=False, evaltest=True)
