@@ -120,6 +120,7 @@ def encode(args):
                 captions = Captions.get_captions(image_id)
                 X_group, Y_group = Captions.get_caption_convolutions(captions,False)
                 for c,_ in zip(X_group,Y_group):
+                    print(c)
                     new_X.append((c,image_id))
 
             print("ordered_X2",len(new_X)," ")
