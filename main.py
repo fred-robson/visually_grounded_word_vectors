@@ -123,6 +123,8 @@ def encode(args):
                 resnet = Captions.get_resnet_output(image_id)
                 output.append((sentence,resnet,y))
 
+            print("Predicted ",len(output)," outputs")
+
                 
 
             save_loc = base_fp+"/skip-thoughts/our_model_encodings.pkl"
