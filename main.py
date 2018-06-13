@@ -111,9 +111,10 @@ def encode(args):
             elif isinstance(data, tuple):
                 preds = encoder.predict(x=data[0],verbose=1)
             
-            print("Predicted ",len(preds)," outputs")
-
+            
             X = Captions.ordered_X[len(preds):]
+            print("Predicted ",len(preds)," preds")
+            print("ordered_X",len(X)," ")
             
             output = []
 
