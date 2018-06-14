@@ -115,3 +115,4 @@ logs/*
 models/saved/*
 *.keras
 
+logs_instance_2/

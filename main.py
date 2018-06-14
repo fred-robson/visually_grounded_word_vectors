@@ -29,6 +29,8 @@ from keras.layers import TimeDistributed
 from keras.layers import Embedding
 from models.prototypes.baseline import KLDivergenceLayer
 
+def array_to_txt(X, embeddings):
+    temp_dict = {}
 
 def log_dir_name(learning_rate, model, run_type, dataset):
 
@@ -99,7 +101,10 @@ def word_embed(args):
         
         if args.load is not None:
             print("Loading model "+args.load+" ...")
-            model.load_model(args.load)
+            if args.model == "vae2all":
+                model.load_model(args.load, custom_objects={"KLDivergenceLayer": KLDivergenceLayer})
+            else:
+                model.load_model(args.load)
         
         model.compile()
 
@@ -185,12 +190,16 @@ def encode(args):
         if isinstance(data, keras.utils.Sequence):
             if args.model == "vae2all":
                 pred_names = [output.name for output in encoder.output_layers]
-                preds, mean, variance = encoder.predict_generator(data,verbose=1)
+                preds, mean, variance = encoder.predict_generator(data,verbose=1)cd 
             else:
                 preds = encoder.predict_generator(data,verbose=1)
         
         elif isinstance(data, tuple):
-            preds = encoder.predict(x=data[0],verbose=1)
+            if args.model == "vae2all":
+                pred_names = [output.name for output in encoder.output_layers]
+                preds, mean, variance = encoder.predict_generator(data,verbose=1)cd 
+            else:
+                preds = encoder.predict_generator(data,verbose=1)
         
         
         X = Captions.ordered_IDs
