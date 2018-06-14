@@ -1,9 +1,11 @@
 from utils.data_utils import *
+from utils.word_vec_utils import *
 import sys
 
 
 def initial_filtering():
-	CG = CaptionGloveVectors()
+	CG = OurGloveVectors()
+	print(len(CG.i2w))
 	G = GloVeVectors()
 	vocab_intersection = set(G.get_vocab()) & set(CG.get_vocab())
 	CG.filter_wv(vocab_intersection)
@@ -11,13 +13,14 @@ def initial_filtering():
 	return G,CG,vocab_intersection
 
 
-def main():
+def main(w):
 	G,CG,vocab_intersection = initial_filtering()	
-	w = "eats"
+	print("GloVe Vectors")
 	print(G.nearest_neighbors(w,5))
+	print("OurGlove")
 	print(CG.nearest_neighbors(w,5))
 
 
 if __name__ == "__main__":
-	
-	main()
+	print(sys.argv)
+	main(sys.argv[1])
