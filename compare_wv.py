@@ -16,9 +16,11 @@ def initial_filtering():
 def main(w,i):
 	G,CG,vocab_intersection = initial_filtering()	
 	print("GloVe Vectors")
-	print(G.nearest_neighbors(w,i))
+	for w,d in G.nearest_neighbors(w,i):
+		print(w,d)
 	print("OurGlove")
-	print(CG.nearest_neighbors(w,i))
+	for w,d in CG.nearest_neighbors(w,i):
+		print(w,d)
 
 
 if __name__ == "__main__":

@@ -76,7 +76,7 @@ class WordVectors():
 		func = lambda x: dist_func(x,wv)
 		distances = np.apply_along_axis(func,1,self.vectors)
 		ordered_indices = np.argsort(distances)
-		return [(self.i2w[i],distances[i]) for i in ordered_indices[1:k+1]]
+		return [(self.i2w[i],distances[i]) for i in ordered_indices[1:k+1] if distances[i]>0]
 
 	def get_vocab(self):
 		return self.i2w 
@@ -107,8 +107,7 @@ def load_txt_vectors(filepath,dimensions):
 		for i,line in tqdm(enumerate(f),total=num_words,desc="Reading %d dimensional vectors"%dimensions):
 			row = line.split()
 			word = row[0]
-			vector = np.array(row[1:])
-
+			vector = np.array(row[1:],dtype="float")
 			words.append(word)
 			vectors[i] = vector
 
@@ -167,7 +166,10 @@ class OurGloveVectors(WordVectors):
 
 
 if __name__ == "__main__":
-	print(OurGloveVectors().i2w)
+	G = OurGloveVectors()
+	for i,v in enumerate(G.vectors):
+		if sum(v) == 0: print (G.i2w[i])
+
 
 
 
