@@ -29,8 +29,18 @@ from keras.layers import TimeDistributed
 from keras.layers import Embedding
 from models.prototypes.baseline import KLDivergenceLayer
 
-def array_to_txt(X, embeddings):
+def embeddings_to_txt(X, embeddings):
     temp_dict = {}
+    output = []
+    for x,y in zip(X,embeddings):
+        c,image_id =x
+        print(c.shape)
+        print(y.shape)
+        exit()
+        sentence = Captions.WV.indices_to_words(c)
+        sentence = " ".join(sentence[1:-1])
+        resnet = Captions.get_resnet_output(image_id)
+        output.append((sentence,resnet,y))
 
 def log_dir_name(learning_rate, model, run_type, dataset):
 
@@ -128,14 +138,7 @@ def word_embed(args):
         print("ordered_X2",len(new_X)," ")
         print("Predicted ",embeddings.shape," preds")
 
-        output = []
-
-        for x,y in zip(new_X,preds):
-            c,image_id =x
-            sentence = Captions.WV.indices_to_words(c)
-            sentence = " ".join(sentence[1:-1])
-            resnet = Captions.get_resnet_output(image_id)
-            output.append((sentence,resnet,y))
+        embeddings_to_txt(new_X, embeddings)
 
         print("U ",len(output)," outputs")
 
