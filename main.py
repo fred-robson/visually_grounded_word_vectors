@@ -183,7 +183,11 @@ def encode(args):
         encoder = model.get_encoder()
         
         if isinstance(data, keras.utils.Sequence):
-            preds = encoder.predict_generator(data,verbose=1)
+            if args.model == "vae2all":
+                pred_names = [output.name for output in encoder.output_layers]
+                preds, mean, variance = encoder.predict_generator(data,verbose=1)
+            else:
+                preds = encoder.predict_generator(data,verbose=1)
         
         elif isinstance(data, tuple):
             preds = encoder.predict(x=data[0],verbose=1)

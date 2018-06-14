@@ -276,7 +276,7 @@ if __name__ == '__main__':
 						num_embeddings=embedding_matrix.shape[0],
 						activation='relu',
 						latent_dim=1000)
-	cap2 = Cap2All(hparams, embeddings=embedding_matrix)
+	cap2 = Vae2All(hparams, embeddings=embedding_matrix)
 	cap2.compile()
 	cap2.visualize()
 	encoder = cap2.get_word_encoder()
