@@ -23,4 +23,4 @@ def main(w,i):
 
 if __name__ == "__main__":
 	print(sys.argv)
-	main(sys.argv[1],sys.argv[2])
+	main(sys.argv[1],int(sys.argv[2]))
