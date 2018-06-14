@@ -29,18 +29,25 @@ from keras.layers import TimeDistributed
 from keras.layers import Embedding
 from models.prototypes.baseline import KLDivergenceLayer
 
-def embeddings_to_txt(X, embeddings):
+def embeddings_to_txt(X, embeddings,WV):
     temp_dict = {}
     output = []
     for x,y in zip(X,embeddings):
-        c,image_id =x
-        print(c.shape)
-        print(y.shape)
-        exit()
-        sentence = Captions.WV.indices_to_words(c)
-        sentence = " ".join(sentence[1:-1])
-        resnet = Captions.get_resnet_output(image_id)
-        output.append((sentence,resnet,y))
+        c,image_id = x
+        for w,e in zip(c[1:],y):
+            temp_dict[w] = e
+    with open("our_embeddings.txt","w+") as f:
+        for w,e in temp_dict.items():
+            f.write(WV.i2w[w])
+            for item in e: 
+                f.write(" "+str(item))
+            f.write("\n")
+    print("Txt file created")
+
+
+
+        
+
 
 def log_dir_name(learning_rate, model, run_type, dataset):
 
@@ -138,16 +145,7 @@ def word_embed(args):
         print("ordered_X2",len(new_X)," ")
         print("Predicted ",embeddings.shape," preds")
 
-        embeddings_to_txt(new_X, embeddings)
-
-        print("U ",len(output)," outputs")
-
-        exit()
-
-        save_loc = base_fp+"/data/Vectors/Grounded/word_embed.pkl"
-        pkl.dump(output,open(save_loc,"wb+"),2)
-        print("Output saved")
-
+        embeddings_to_txt(new_X, embeddings,WV)
 
 
 

@@ -156,10 +156,19 @@ class FilteredGloveVectors(WordVectors):
 		words,vectors = load_txt_vectors(filepath,dimensions)
 		WordVectors.__init__(self,words,vectors)
 
+class OurGloveVectors(WordVectors):
+	#Same value as the GloveVectors, but filtered to only include vocab from the Captions
+
+	def __init__(self):
+		filepath = base_fp+"../our_embeddings.txt"
+		self.dimensions = 50
+		words,vectors = load_txt_vectors(filepath,50)
+		WordVectors.__init__(self,words,vectors)
+
+
 if __name__ == "__main__":
-	build_filtered_vectors()
-	for d in {50,100,200,300}:
-		F = FilteredGloveVectors(d)
+	print(OurGloveVectors().i2w)
+
 
 
 	
