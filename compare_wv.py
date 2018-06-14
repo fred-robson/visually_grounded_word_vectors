@@ -13,14 +13,14 @@ def initial_filtering():
 	return G,CG,vocab_intersection
 
 
-def main(w):
+def main(w,i):
 	G,CG,vocab_intersection = initial_filtering()	
 	print("GloVe Vectors")
-	print(G.nearest_neighbors(w,5))
+	print(G.nearest_neighbors(w,i))
 	print("OurGlove")
-	print(CG.nearest_neighbors(w,5))
+	print(CG.nearest_neighbors(w,i))
 
 
 if __name__ == "__main__":
 	print(sys.argv)
-	main(sys.argv[1])
+	main(sys.argv[1],sys.argv[2])
