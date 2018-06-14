@@ -157,7 +157,7 @@ class HPSearcher(object):
                         # inputs = {'encoder_input': X, 'decoder_input': Y1}
                         # outputs = {'decoder_output': Y2}
 
-                    if self.model is not 'cap2img':
+                    if self.model != 'cap2img':
                         self.custom_metrics[0].validation_data = val_data
                         callbacks += self.custom_metrics
                         # _, X, Y = self.data_helper.cap2resnet()

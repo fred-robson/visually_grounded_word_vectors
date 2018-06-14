@@ -27,6 +27,7 @@ from keras.layers import LSTM
 from keras.layers import Dense
 from keras.layers import TimeDistributed
 from keras.layers import Embedding
+from models.prototypes.baseline import KLDivergenceLayer
 
 
 def log_dir_name(learning_rate, model, run_type, dataset):
@@ -172,7 +173,10 @@ def encode(args):
         
         if args.load is not None:
             print("Loading model "+args.load+" ...")
-            model.load_model(args.load)
+            if args.model == "vae2all":
+                model.load_model(args.load, custom_objects={"KLDivergenceLayer": KLDivergenceLayer})
+            else:
+                model.load_model(args.load)
         
         model.compile()
 

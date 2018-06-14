@@ -103,8 +103,8 @@ class Cap2(object):
 	def _build(self):
 		return None, None
 
-	def load_model(self, path):
-		self.model = keras.models.load_model(path)
+	def load_model(self, path, custom_objects=None):
+		self.model = keras.models.load_model(path, custom_objects=custom_objects)
 
 	def get_encoder(self):
 		encoder = self._encoder_model()
