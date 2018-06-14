@@ -69,6 +69,79 @@ def hp_search(args):
                             batch_size=args.batch_size)
     results = hp_searcher.run()
 
+def word_embed(args):
+    Captions = CocoCaptions(args.data,args.max_samples)
+    WV = FilteredGloveVectors()
+    Captions.initialize_WV(WV)
+    embedding_matrix = WV.get_embedding_matrix()
+
+    if args.model[:4] == "cap2" or args.model[:4] == "vae2" :
+        inputs, outputs = None, None
+        datagen, valgen = None, None
+        cap2 = None
+
+        hparams = HParams(learning_rate=args.learning_rate, hidden_dim=1024,
+                    optimizer='adam', dropout= 0.5, 
+                    max_seq_length=Captions.max_caption_len,
+                    embed_dim=embedding_matrix.shape[-1],
+                    num_embeddings=embedding_matrix.shape[0],
+                    activation='relu',
+                    latent_dim=1000)
+
+        if args.gen == 'train' or args.gen == 'all':
+            data = get_data(args.model, Captions, gen=True)
+        else:
+            data = get_data(args.model, Captions)
+
+        ModelClass = get_model(args.model)
+        model = ModelClass(hparams, embeddings=embedding_matrix)
+        
+        if args.load is not None:
+            print("Loading model "+args.load+" ...")
+            model.load_model(args.load)
+        
+        model.compile()
+
+        word_encoder = model.get_word_encoder()
+        if isinstance(data, keras.utils.Sequence):
+            embeddings = word_encoder.predict_generator(data,verbose=1)
+    
+        elif isinstance(data, tuple):
+            embeddings = word_encoder.predict(x=data[0],verbose=1)
+        
+        X = Captions.ordered_IDs
+        print("ordered_X1",len(X)," ")
+        
+        new_X = []
+        for image_id in X:
+            captions = Captions.get_captions(image_id)
+            X_group, Y_group = Captions.get_caption_convolutions(captions)
+            for c,_ in zip(X_group,Y_group):
+                new_X.append((c,image_id))
+
+        print("ordered_X2",len(new_X)," ")
+        print("Predicted ",embeddings.shape," preds")
+
+        output = []
+
+        for x,y in zip(new_X,preds):
+            c,image_id =x
+            sentence = Captions.WV.indices_to_words(c)
+            sentence = " ".join(sentence[1:-1])
+            resnet = Captions.get_resnet_output(image_id)
+            output.append((sentence,resnet,y))
+
+        print("U ",len(output)," outputs")
+
+        exit()
+
+        save_loc = base_fp+"/data/Vectors/Grounded/word_embed.pkl"
+        pkl.dump(output,open(save_loc,"wb+"),2)
+        print("Output saved")
+
+
+
+
 def encode(args):
 
     Captions = CocoCaptions(args.data,args.max_samples)
@@ -77,84 +150,71 @@ def encode(args):
     embedding_matrix = WV.get_embedding_matrix()
 
     if args.model[:4] == "cap2" or args.model[:4] == "vae2" :
-            inputs, outputs = None, None
-            datagen, valgen = None, None
-            cap2 = None
+        inputs, outputs = None, None
+        datagen, valgen = None, None
+        cap2 = None
 
-            hparams = HParams(learning_rate=args.learning_rate, hidden_dim=1024,
-                        optimizer='adam', dropout= 0.5, 
-                        max_seq_length=Captions.max_caption_len,
-                        embed_dim=embedding_matrix.shape[-1],
-                        num_embeddings=embedding_matrix.shape[0],
-                        activation='relu',
-                        latent_dim=1000)
+        hparams = HParams(learning_rate=args.learning_rate, hidden_dim=1024,
+                    optimizer='adam', dropout= 0.5, 
+                    max_seq_length=Captions.max_caption_len,
+                    embed_dim=embedding_matrix.shape[-1],
+                    num_embeddings=embedding_matrix.shape[0],
+                    activation='relu',
+                    latent_dim=1000)
 
-            if args.gen == 'train' or args.gen == 'all':
-                data = get_data(args.model, Captions, gen=True)
-            else:
-                data = get_data(args.model, Captions)
+        if args.gen == 'train' or args.gen == 'all':
+            data = get_data(args.model, Captions, gen=True)
+        else:
+            data = get_data(args.model, Captions)
 
-            ModelClass = get_model(args.model)
-            model = ModelClass(hparams, embeddings=embedding_matrix)
+        ModelClass = get_model(args.model)
+        model = ModelClass(hparams, embeddings=embedding_matrix)
+        
+        if args.load is not None:
+            print("Loading model "+args.load+" ...")
+            model.load_model(args.load)
+        
+        model.compile()
+
+        encoder = model.get_encoder()
+        
+        if isinstance(data, keras.utils.Sequence):
+            preds = encoder.predict_generator(data,verbose=1)
+        
+        elif isinstance(data, tuple):
+            preds = encoder.predict(x=data[0],verbose=1)
+        
+        
+        X = Captions.ordered_IDs
+        print("ordered_X1",len(X)," ")
+        
+        new_X = []
+        for image_id in X:
+            captions = Captions.get_captions(image_id)
+            X_group, Y_group = Captions.get_caption_convolutions(captions)
+            for c,_ in zip(X_group,Y_group):
+                new_X.append((c,image_id))
+
+        print("ordered_X2",len(new_X)," ")
+        print("Predicted ",len(preds)," preds")
+        
+        
+        output = []
+
+        for x,y in zip(new_X,preds):
+            c,image_id =x
+            sentence = Captions.WV.indices_to_words(c)
+            sentence = " ".join(sentence[1:-1])
+            resnet = Captions.get_resnet_output(image_id)
+            output.append((sentence,resnet,y))
+
+        print("U ",len(output)," outputs")
+
             
-            if args.load is not None:
-                print("Loading model "+args.load+" ...")
-                model.load_model(args.load)
-            
-            model.compile()
 
-            encoder = model.get_encoder()
-            embeddings = None
-
-            if args.word_embed:
-                word_encoder = model.get_word_encoder()
-                if isinstance(data, keras.utils.Sequence):
-                    embeddings = word_encoder.predict_generator(data,verbose=1)
-            
-                elif isinstance(data, tuple):
-                    embeddings = word_encoder.predict(x=data[0],verbose=1)
-
-                save_loc = base_fp+"/skip-thoughts/our_model_encodings.pkl"
-
-            print(embeddings)
-            
-            if isinstance(data, keras.utils.Sequence):
-                preds = encoder.predict_generator(data,verbose=1)
-            
-            elif isinstance(data, tuple):
-                preds = encoder.predict(x=data[0],verbose=1)
-            
-            
-            X = Captions.ordered_IDs
-            print("ordered_X1",len(X)," ")
-            
-            new_X = []
-            for image_id in X:
-                captions = Captions.get_captions(image_id)
-                X_group, Y_group = Captions.get_caption_convolutions(captions)
-                for c,_ in zip(X_group,Y_group):
-                    new_X.append((c,image_id))
-
-            print("ordered_X2",len(new_X)," ")
-            print("Predicted ",len(preds)," preds")
-            
-            
-            output = []
-
-            for x,y in tqdm(zip(new_X,preds)):
-                c,image_id =x
-                sentence = Captions.WV.indices_to_words(c)
-                sentence = " ".join(sentence[1:-1])
-                resnet = Captions.get_resnet_output(image_id)
-                output.append((sentence,resnet,y))
-
-            print("U ",len(output)," outputs")
-
-                
-
-            save_loc = base_fp+"/skip-thoughts/our_model_encodings.pkl"
-            pkl.dump(output,open(save_loc,"wb+"),2)
-            print("Output saved")
+        save_loc = base_fp+"/skip-thoughts/our_model_encodings.pkl"
+        pkl.dump(output,open(save_loc,"wb+"),2)
+        print("Output saved")
 
 
 
@@ -364,6 +424,8 @@ if __name__ == '__main__':
             hp_search(args)
         elif args.encode:
             encode(args)
+        elif args.word_embed:
+            word_embed(args)
         else:
             main(args)
 

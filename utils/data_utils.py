@@ -264,6 +264,7 @@ class CaptionsSuper():
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
 		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
+
 		return dict(batch_x),dict(batch_y)
 
 
@@ -291,7 +292,6 @@ class CaptionsSuper():
 				self.ordered_X.append((image_id,x))
 		for k,v in batch_x.items(): batch_x[k] = np.array(v)
 		for k,v in batch_y.items(): batch_y[k] = np.array(v)
-
 		batch_y['projection_output'] = batch_y['projection_output'][:,0,:]
 		return dict(batch_x),dict(batch_y)
 
